@@ -172,11 +172,12 @@ void updateServoState() {
     }
     else {
       if (myservo.read() != serclose) {  // If servo isn't already closed
-        moveServo(serclose);
+        moveServo(serclose);  // Close the lid
       }
     }
   }
 }
+
 
 
 // Function to handle temperature PID (placeholder)
