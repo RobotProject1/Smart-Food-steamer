@@ -2,7 +2,6 @@
 #include <Servo.h>
 #include "VEGA_MLX90614.h"
 
-// Object initialization
 Servo myservo;
 VEGA_MLX90614 mlx(18, 19);
 
