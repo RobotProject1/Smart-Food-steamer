@@ -7,6 +7,7 @@
 
 Servo myservo;
 VEGA_MLX90614 mlx(18, 19);
+Adafruit_SSD1306 display(4);
 
 // Pin
 const int touchpad1 = 0;
@@ -68,7 +69,7 @@ void loop() {
   updateServoState();    // Update servo position based on state
   updateTempPID();       // Placeholder for temp PID logic
   checkTouchpad1();     // Check touchpad and toggle state
-  checlTouchpad3();     // Check touchpad and toggle state
+  checkTouchpad3();     // Check touchpad and toggle state
   displaySetup();       // Setup for OLED display
   delay(300);            // Main loop delay
 }
@@ -78,7 +79,7 @@ void checkTouchpad2() {
   valtp2 = digitalRead(touchpad2);
   if (valtp2 == 1) {
     tone(buzz, 3000, 100);
-    stat = !stat;
+    stat2 = !stat2;
     delay(100);
   }
 }
@@ -150,11 +151,11 @@ void updateServoState() {
   float cur = readCurrent();  // Read the current value
 
   // Check the condition for opening or closing the lid based on the threshold
-  if (stat == 1) {  // Lid is currently open
+  if (stat2 == 1) {  // Lid is currently open
     if (cur > threshold) {
       if (myservo.read() != serclose) {  // If servo isn't already closed
         moveServo(serclose);  // Close the lid
-        stat = 0;  // Update state to closed
+        stat2 = 0;  // Update state to closed
       }
     }
     else {
@@ -167,7 +168,7 @@ void updateServoState() {
     if (cur > threshold) {
       if (myservo.read() != seropen) {  // If servo isn't already open
         moveServo(seropen);  // Open the lid
-        stat = 1;  // Update state to open
+        stat2 = 1;  // Update state to open
       }
     }
     else {
@@ -178,8 +179,6 @@ void updateServoState() {
   }
 }
 
-
-
 // Function to handle temperature PID (placeholder)
 void updateTempPID() {
   Input = mlx.mlx90614ReadTargetTempC();
@@ -187,8 +186,61 @@ void updateTempPID() {
   // Add logic here to use Output (e.g., control a heater or fan)
 }
 
+void drawMode() {
+  display.fillRect(0, 20, 50, 20, SSD1306_BLACK);  // Clear previous mode text
+  display.setCursor(5, 10);
+  display.print("MODE:");
+  display.setCursor(5, 30);
+  display.print(stat1 == 0 ? "MANUAL" : "AUTO");
+  display.display();
+}
+
+void drawLightBulb() {
+  int x = 110, y = 12;
+  display.fillRect(100, 0, 28, 25, SSD1306_BLACK); // Clear previous lightbulb
+  if (stat3 == 1) {
+    // Light ON - Draw glowing bulb
+    display.drawCircle(x, y, 9, SSD1306_WHITE);
+    display.fillCircle(x, y, 6, SSD1306_WHITE);
+    display.drawLine(x, 18, x, 24, SSD1306_WHITE);
+    display.drawLine(x - 3, 24, x + 3, 24, SSD1306_WHITE);
+  } else {
+    // Light OFF - Only draw bulb outline
+    display.drawCircle(x, y, 9, SSD1306_WHITE);
+    display.drawLine(x, 18, x, 24, SSD1306_WHITE);
+    display.drawLine(x - 3, 24, x + 3, 24, SSD1306_WHITE);
+  }
+  display.display();
+}
+
+void checkTouchpad1() {
+  valtp1 = digitalRead(touchpad1);
+  if (valtp1 == 1) {
+    tone(buzz, 3000, 100);
+    stat1 = !stat1;
+    drawMode();
+    delay(100);
+  }
+}
+
+void checkTouchpad3() {
+  valtp3 = digitalRead(touchpad3);
+  if (valtp3 == 1) {
+    tone(buzz, 3000, 100);
+    stat3 = !stat3;
+    drawMode();
+    delay(100);
+  }
+}
+
 // Function to update OLED display (placeholder)
-void updateDisplay() {
+void displaySetup() {
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(SSD1306_WHITE);
+  drawMode();
+  drawLightBulb();
   // Add OLED display code here (e.g., using SSD1306 library)
   // Example: display temperature, servo position, or status
 }
