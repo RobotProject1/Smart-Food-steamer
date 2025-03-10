@@ -6,43 +6,34 @@
 Servo myservo;
 VEGA_MLX90614 mlx(18, 19);
 
-// Pin
-const int touchpad1 = 0;
-const int touchpad2 = 1;
-const int touchpad3 = 2;
-const int buzz = 3;
+// Pin assignments
+const int buzz = 3;  // Buzzer pin
 
 // Initial values
-int valtp1 = 0;
 int stat = 0;
-int seropen = 90;
-int serclose = 0;
-float kt = 2;
+const int seropen = 130;
+const int serclose = 0;
+const float kt = 5;
 
 const int SAMPLES = 10;
 float s_val[SAMPLES];
+float threshold = 0.0;
 
 void setup() {
-  Serial.begin(9600);  // Start serial communication
-  myservo.attach(6);  // Attach the servo to the defined pin
+  Serial.begin(9600);
+  myservo.attach(6);
+  pinMode(buzz, OUTPUT);
 }
 
 void loop() {
-  if (cur > threshold) {
-    if (myservo.read() != serclose) {  // If servo isn't already closed
-      moveServo(serclose);  // Close the lid
-      stat = 0;  // Update state to closed
-    }
-  }
-  else {
-    if (myservo.read() != seropen) {  // If servo isn't already open
-      moveServo(seropen);  // Open the lid
-    }
-  }
+  moveServo(seropen);
+  delay(2000);  // Wait for 2 seconds
+  moveServo(serclose);
+  delay(2000);  // Wait for 2 seconds
 }
 
 float readCurrent() {
-  int adc = analogRead(A5);
+  int adc = analogRead(A1);
   float voltage = adc * 5.0 / 1023.0;
   float current = (voltage - 2.5) / 0.185;
   return current;
@@ -61,45 +52,38 @@ float calculateSD(float arr[], int size, float mean) {
   for (int i = 0; i < size; i++) {
     sumSquaredDiffs += pow(arr[i] - mean, 2);
   }
-  return sqrt(sumSquaredDiffs / size);  // Population SD (use (size-1) for sample SD)
+  return sqrt(sumSquaredDiffs / size);
 }
 
 void moveServo(int targetPos) {
   int currentPos = myservo.read();
-  if (currentPos < targetPos) {
-    for (int pos = currentPos; pos <= targetPos; pos++) { 
-      // Collect SAMPLES before processing
-      for (int i = 0; i < SAMPLES; i++) {
-        myservo.write(pos);
-        delay(20);
-        s_val[i] = readCurrent();  // Store current reading
-      }
+  int step = (currentPos < targetPos) ? 1 : -1;
 
-      float mean = calculateMean(s_val, SAMPLES);
-      float sd = calculateSD(s_val, SAMPLES, mean);
-      float threshold = calibratethreshold(mean, sd);
-      memset(s_val, 0, sizeof(s_val));
+  for (int pos = currentPos; pos != targetPos + step; pos += step) {
+    myservo.write(pos);
+    delay(10);
+
+    // Collect SAMPLES for current measurement
+    for (int i = 0; i < SAMPLES; i++) {
+      s_val[i] = readCurrent();
+    }
+    float cur = readCurrent();
+    float mean = calculateMean(s_val, SAMPLES);
+    float sd = calculateSD(s_val, SAMPLES, mean);
+    threshold = calibrateThreshold(mean, sd);
+
+    if (cur > threshold) {
+      Serial.println("Obstacle detected!");
+      Serial.println(threshold);
+      Serial.println(cur);
+      return;  // Stop movement if obstacle is found
     }
   }
 
-  else if (currentPos > targetPos) {
-    for (int pos = currentPos; pos >= targetPos; pos--) {
-      for (int i = 0; i < SAMPLES; i++) {
-        myservo.write(pos);
-        delay(20);
-        s_val[i] = readCurrent();  // Store current reading
-      }
-      
-      float mean = calculateMean(s_val, SAMPLES);
-      float sd = calculateSD(s_val, SAMPLES, mean);
-      float threshold = calibratethreshold(mean, sd);
-      memset(s_val, 0, sizeof(s_val));
-    }
-  }
-}
-float calibratethreshold(float mean, float sd) {
-  float threshold = mean + (kt * sd);
-  return threshold;
+  // Ensure final position is set
+  myservo.write(targetPos);
 }
 
-
+float calibrateThreshold(float mean, float sd) {
+  return mean + (kt * sd);
+}
