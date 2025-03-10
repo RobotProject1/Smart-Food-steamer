@@ -1,6 +1,9 @@
+#include <Wire.h>
 #include <PID_v1.h>
 #include <Servo.h>
 #include "VEGA_MLX90614.h"
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 Servo myservo;
 VEGA_MLX90614 mlx(18, 19);
@@ -13,7 +16,12 @@ const int buzz = 3;
 
 // Initial values
 int valtp1 = 0;
-int stat = 0;
+int stat1 = 0;
+int valtp3 = 0;
+int stat3 = 0;
+
+int valtp2 = 0;
+int stat2 = 0;
 int seropen = 90;
 int serclose = 0;
 
@@ -59,14 +67,16 @@ void loop() {
   checkTouchpad2();       // Check touchpad and toggle state
   updateServoState();    // Update servo position based on state
   updateTempPID();       // Placeholder for temp PID logic
-  updateDisplay();       // Placeholder for OLED display logic
+  checkTouchpad1();     // Check touchpad and toggle state
+  checlTouchpad3();     // Check touchpad and toggle state
+  displaySetup();       // Setup for OLED display
   delay(300);            // Main loop delay
 }
 
 // Function to check touchpad and toggle state
 void checkTouchpad2() {
-  valtp1 = digitalRead(touchpad1);
-  if (valtp1 == 1) {
+  valtp2 = digitalRead(touchpad2);
+  if (valtp2 == 1) {
     tone(buzz, 3000, 100);
     stat = !stat;
     delay(100);
