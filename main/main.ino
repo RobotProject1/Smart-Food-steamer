@@ -40,7 +40,7 @@ double Setpoint, Input, Output;
 double Kp = 2, Ki = 5, Kd = 1;
 PID tempPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
-float threshold = 0.0;
+float threshold = 1.2; // ไว้มาแก้
 
 void setup() {
   Serial.begin(9600);
@@ -57,10 +57,10 @@ void setup() {
 
   // Initial PID inputs
   Input = mlx.mlx90614ReadTargetTempC(); // Temp input
-  lInput = myservo.read();               // Servo current position
+  // lInput = myservo.read();               // Servo current position
 
   // PID mode activation
-  lidPID.SetMode(AUTOMATIC);
+  // lidPID.SetMode(AUTOMATIC);
   tempPID.SetMode(AUTOMATIC);
 }
 
@@ -117,12 +117,12 @@ void moveServo(int targetPos) {
 //   return threshold;
 // }
 
-// float readCurrent() {
-//   int adc = analogRead(A1);
-//   float voltage = adc * 5.0 / 1023.0;
-//   float current = (voltage - 2.5) / 0.185;
-//   return current;
-// }
+float readCurrent() {
+  int adc = analogRead(A1);
+  float voltage = adc * 5.0 / 1023.0;
+  float current = (voltage - 2.5) / 0.185;
+  return current;
+}
 
 // float calculateMean(float arr[], int size) {
 //   float sum = 0;
@@ -144,9 +144,8 @@ void moveServo(int targetPos) {
 void updateServoState() {
   float cur = readCurrent();  // Read the current value
 
-<<<<<<< HEAD
   if (stat2 == 1) { // Lid is open
-    if (cur > threshold && myservo.read() != serclose) {
+    if (cur < threshold && myservo.read() != seropen) {
       Serial.println("Closing lid due to obstacle...");
       moveServo(serclose);
       stat2 = 0;
@@ -156,43 +155,17 @@ void updateServoState() {
     }
   } 
   else { // Lid is closed
-    if (cur > threshold && myservo.read() != seropen) {
+    if (cur < threshold && myservo.read() != serclose) {
       Serial.println("Opening lid due to obstacle...");
       moveServo(seropen);
       stat2 = 1;
     } 
     else if (myservo.read() != serclose) {
       moveServo(serclose);
-=======
-  // Check the condition for opening or closing the lid based on the threshold
-  if (stat2 == 1) {  // Lid is currently open
-    if (cur > threshold) {
-      if (myservo.read() != serclose) {  // If servo isn't already closed
-        moveServo(serclose);  // Close the lid
-        stat2 = 0;  // Update state to closed
-      }
-    }
-    else {
-      if (myservo.read() != seropen) {  // If servo isn't already open
-        moveServo(seropen);  // Open the lid
-      }
-    }
-  }
-  else {  // Lid is currently closed
-    if (cur > threshold) {
-      if (myservo.read() != seropen) {  // If servo isn't already open
-        moveServo(seropen);  // Open the lid
-        stat2 = 1;  // Update state to open
-      }
-    }
-    else {
-      if (myservo.read() != serclose) {  // If servo isn't already closed
-        moveServo(serclose);  // Close the lid
-      }
->>>>>>> f7e03ddded479c2ff5559147a9869b2c61eedae5
     }
   }
 }
+
 
 // Function to handle temperature PID (placeholder)
 void updateTempPID() {
