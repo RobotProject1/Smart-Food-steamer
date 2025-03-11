@@ -5,11 +5,11 @@ Servo myservo;
 
 // Pin assignments
 const int buzz = 3;  // Buzzer pin
-const int touchpad2 = 1;
+const int touchpad2 = 0;
 
 // Servo positions
-const int seropen = 130;
-const int serclose = 0;
+const int seropen = 140;
+const int serclose = 140;
 
 // Stall detection threshold (adjust based on your servo specs)
 const float threshold = 1.2;
@@ -61,12 +61,12 @@ void moveServo(int targetPos) {
   Serial.println("Moving servo...");
 
   if (currentPos < targetPos) {
-    for (int pos = currentPos; pos <= targetPos; pos++) {
+    for (int pos = currentPos; pos <= targetPos-10; pos++) {
       myservo.write(pos);
       delay(20);
 
       float cur = readCurrent();
-      if (cur > stallCurrent) {
+      if (cur > stallCurrentup) {
         stallCurrentup = cur;  // Capture peak stall current
       }
     }
@@ -74,26 +74,43 @@ void moveServo(int targetPos) {
   else if (currentPos > targetPos) {
     for (int pos = currentPos; pos >= targetPos; pos--) {
       myservo.write(pos);
-      delay(20);
+      delay(50);
 
       float cur = readCurrent();
-      if (cur > stallCurrent) {
+      if (cur > stallCurrentdown) {
         stallCurrentdown = cur;
       }
     }
   }
 
   // Log stall current
-  Serial.print("Stall Current (A): ");
-  Serial.println(stallCurrent, 3);
+  Serial.print("Stall Current Up(A): ");
+  Serial.println(stallCurrentup, 3);
+  Serial.print("Stall Current Down(A): ");
+  Serial.println(stallCurrentdown, 3);
 }
 
-// Function to check touchpad input and toggle state
+// // Function to check touchpad input and toggle state
+// void checkTouchpad2() {
+//   if (digitalRead(touchpad2) == HIGH) {
+//     tone(buzz, 3000, 100);
+//     stat2 = !stat2;
+//     delay(100);
+//   }
+// }
+
+// Function to check touchpad input via Serial command
 void checkTouchpad2() {
-  if (digitalRead(touchpad2) == HIGH) {
-    tone(buzz, 3000, 100);
-    stat2 = !stat2;
-    delay(100);
+  if (Serial.available() > 0) {
+    String command = Serial.readStringUntil('\n'); // Read input until newline
+    command.trim(); // Remove extra spaces/newlines
+
+    if (command == "toggle") { // Simulate button press
+      tone(buzz, 3000, 100);
+      stat2 = !stat2;
+      Serial.print("Button Press Simulated! stat2 is : ");
+      Serial.println(stat2);
+    }
   }
 }
 
@@ -109,7 +126,8 @@ void updateServoState() {
     } else if (myservo.read() != seropen) {
       moveServo(seropen);
     }
-  } else { // Lid is closed
+  } 
+  if (stat2 == 0) { // Lid is closed
     if (cur < threshold && myservo.read() != serclose) {
       Serial.println("Opening lid...");
       moveServo(seropen);
