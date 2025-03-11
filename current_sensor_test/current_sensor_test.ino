@@ -8,8 +8,8 @@ const int buzz = 3;  // Buzzer pin
 const int touchpad2 = 0;
 
 // Servo positions
-const int seropen = 140;
-const int serclose = 140;
+const int seropen = 135;
+const int serclose = 15;
 
 // Stall detection threshold (adjust based on your servo specs)
 const float threshold = 1.2;
@@ -21,6 +21,8 @@ int readIndex = 0;
 float total = 0;
 float maxCurrent = 0;
 unsigned long lastPrintTime = 0;
+float stallCurrentup;  // Track max current during movement
+float stallCurrentdown;
 
 // Touchpad state
 int stat2 = 0;
@@ -37,9 +39,10 @@ void setup() {
   for (int i = 0; i < numReadings; i++) {
     readings[i] = 0;
   }
+  delay(8000);
 }
-
 void loop() {
+  delay(500);
   checkTouchpad2();       // Check touchpad input
   updateServoState();     // Control servo based on state
 }
@@ -55,39 +58,40 @@ float readCurrent() {
 // Function to move servo with stall current detection
 void moveServo(int targetPos) {
   int currentPos = myservo.read();
-  float stallCurrentup = 0;  // Track max current during movement
-  float stallCurrentdown = 0;
 
   Serial.println("Moving servo...");
 
   if (currentPos < targetPos) {
     for (int pos = currentPos; pos <= targetPos-10; pos++) {
       myservo.write(pos);
-      delay(20);
-
-      float cur = readCurrent();
-      if (cur > stallCurrentup) {
-        stallCurrentup = cur;  // Capture peak stall current
-      }
+      delay(8);
+      
+      float curup = readCurrent();
+      Serial.println(curup);
+      if (abs(curup) > stallCurrentup) {
+         stallCurrentup = abs(curup);  // Capture peak stall current
+       }
     }
   } 
-  else if (currentPos > targetPos) {
+  if (currentPos > targetPos) {
     for (int pos = currentPos; pos >= targetPos; pos--) {
       myservo.write(pos);
-      delay(50);
-
-      float cur = readCurrent();
-      if (cur > stallCurrentdown) {
-        stallCurrentdown = cur;
-      }
+      delay(12);
+      
+      float curdown = readCurrent();
+      Serial.println(curdown);
+      if (abs(curdown) > stallCurrentdown) {
+         stallCurrentdown = abs(curdown);
+       }
+      
     }
   }
 
   // Log stall current
   Serial.print("Stall Current Up(A): ");
-  Serial.println(stallCurrentup, 3);
+  Serial.println(stallCurrentup);
   Serial.print("Stall Current Down(A): ");
-  Serial.println(stallCurrentdown, 3);
+  Serial.println(stallCurrentdown);
 }
 
 // // Function to check touchpad input and toggle state
@@ -145,11 +149,10 @@ void updateServoState() {
   if (stat2 == 1) { // Lid is open
       Serial.println("Opening lid...");
       moveServo(serclose);
-      stat2 = 0;
-  if (stat2 == 0) { // Lid is closed
-      Serial.println("Opening lid...");
-      moveServo(seropen);
-      stat2 = 1;
-    }
   }
-} 
+  if (stat2 == 0) { // Lid is closed
+      Serial.println("Closing lid...");
+      moveServo(seropen);
+  }
+
+}
