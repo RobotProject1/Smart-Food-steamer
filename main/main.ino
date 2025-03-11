@@ -23,8 +23,8 @@ int stat3 = 0;
 
 int valtp2 = 0;
 int stat2 = 0;
-int seropen = 130;
-int serclose = 0;
+int seropen = 135;
+int serclose = 15;
 
 const int SAMPLES = 10;
 float s_val[SAMPLES];
