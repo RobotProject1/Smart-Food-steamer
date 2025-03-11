@@ -55,7 +55,8 @@ float readCurrent() {
 // Function to move servo with stall current detection
 void moveServo(int targetPos) {
   int currentPos = myservo.read();
-  float stallCurrent = 0;  // Track max current during movement
+  float stallCurrentup = 0;  // Track max current during movement
+  float stallCurrentdown = 0;
 
   Serial.println("Moving servo...");
 
@@ -66,7 +67,7 @@ void moveServo(int targetPos) {
 
       float cur = readCurrent();
       if (cur > stallCurrent) {
-        stallCurrent = cur;  // Capture peak stall current
+        stallCurrentup = cur;  // Capture peak stall current
       }
     }
   } 
@@ -77,7 +78,7 @@ void moveServo(int targetPos) {
 
       float cur = readCurrent();
       if (cur > stallCurrent) {
-        stallCurrent = cur;
+        stallCurrentdown = cur;
       }
     }
   }
