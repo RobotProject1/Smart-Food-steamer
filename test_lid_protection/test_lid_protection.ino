@@ -22,9 +22,9 @@ int valtp3 = 0;
 int stat3 = 0;
 
 int valtp2 = 0;
-int stat2 = 0;
+bool stat2;
 int seropen = 135;
-int serclose = 7.5;
+int serclose = 10;
 
 const int SAMPLES = 10;
 float s_val[SAMPLES];
@@ -40,15 +40,17 @@ float kt = 2;
 // double Kp = 2, Ki = 5, Kd = 1;
 // PID tempPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
-float thresholdup = 1.2; // ไว้มาแก้
-float thresholddown = 1.5; // ไว้มาแก้
+float thresholdup = 3; // ไว้มาแก้
+float thresholddown = 3.2; // ไว้มาแก้
 
 void setup() {
+  stat2 = 0;
   Serial.begin(9600);
 
   // Servo setup
   myservo.attach(6);
-  myservo.write(serclose);
+  moveServo(serclose);
+
 
   // Pin modes
   pinMode(touchpad1, INPUT);
@@ -68,6 +70,7 @@ void setup() {
 void loop() {
   checkTouchpad2();       // Check touchpad and toggle state
   updateServoState();    // Update servo position based on state
+  //Serial.println(stat2);
 }
 
 // // Function to check touchpad and toggle state
@@ -87,7 +90,7 @@ void checkTouchpad2() {
 
     if (command == "toggle") { // Simulate button press
       tone(buzz, 3000, 100);
-      stat2 = !stat2;
+      stat2 =!stat2;
       Serial.print("Button Press Simulated! stat2 is : ");
       Serial.println(stat2);
     }
@@ -96,19 +99,15 @@ void checkTouchpad2() {
 
 void moveServo(int targetPos) {
   int currentPos = myservo.read();
-
-  Serial.println("Moving servo...");
-
   if (currentPos < targetPos) {
-    for (int pos = currentPos; pos <= targetPos-10; pos++) {
+    for (int pos = currentPos; pos <= targetPos; pos++) {
       myservo.write(pos);
-      delay(8);  
     }
   } 
-  if (currentPos > targetPos) {
+  else if (currentPos > targetPos-10) {
     for (int pos = currentPos; pos >= targetPos; pos--) {
       myservo.write(pos);
-      delay(12);
+      delay(20);
     }
   }
 }
@@ -144,27 +143,89 @@ float readCurrent() {
 // }
 
 // Function to update servo state based on stat
-void updateServoState() {
+// void updateServoState() {
+//   float cur = readCurrent();  // Read the current value
+
+//   if (stat2 == 1) { // Lid is open
+//     if (abs(cur) < thresholddown && myservo.read() != serclose) {
+//       Serial.println("Closing lid");
+//       moveServo(serclose);
+//     } 
+//     else if (myservo.read() != seropen) {
+//       Serial.println("Opening lid due to obstacle...");
+//       moveServo(seropen);
+//       stat2 = !stat2;
+//     }
+//   } 
+//   else if (stat2 == 0) { // Lid is closed
+//     if (abs(cur) < thresholdup && myservo.read() != seropen) {
+//       Serial.println("Opening lid");
+//       moveServo(seropen);
+//     } 
+//     else if (myservo.read() != serclose) {
+//       Serial.println("Closing lid due to obs");
+//       moveServo(serclose);
+//       stat2 = !stat2;
+//     }
+//   }
+// }
+
+void updateServoStatenocurrent() {
   float cur = readCurrent();  // Read the current value
 
-  if (stat2 == 1) { // Lid is open
-    if (cur < thresholddown && myservo.read() != seropen) {
-      Serial.println("Closing lid");
-      moveServo(serclose);
-    } 
-    else if (myservo.read() != seropen) {
-      Serial.println("Opening lid due to obstacle...");
-      moveServo(seropen);
+  if (stat2 == 0) {
+    Serial.println("Closing lid");
+    moveServo(serclose);
+    // else if (myservo.read() != seropen) {
+    //   Serial.println("Opening lid due to obstacle...");
+    //   moveServo(seropen);
+    //   stat2 = !stat2;
+    // }
+  } 
+  else if (stat2 == 1) {
+    Serial.println("Opening lid");
+    moveServo(seropen);
+    // else if (myservo.read() != serclose) {
+    //   Serial.println("Closing lid due to obs");
+    //   moveServo(serclose);
+    //   stat2 = !stat2;
+    // }
+  }
+}
+
+void updateServoState() {
+  float cur = readCurrent();  // Read the current value
+  int pos = myservo.read();
+  if (stat2 == 1) {
+    for ( ; pos < seropen-10; pos += 3) {
+      //Serial.println("Lid is opening...");
+      myservo.write(pos);
+      int pos = myservo.read();
+      delay(8);
+      Serial.println(readCurrent());
+      if (float cur = abs(readCurrent())>thresholdup) {
+        Serial.print("obstacle detect, lid closing :");
+        Serial.println(cur);
+        moveServo(serclose);
+        stat2=0;
+        return;
+      }
     }
   } 
-  else { // Lid is closed
-    if (cur < thresholdup && myservo.read() != serclose) {
-      Serial.println("Opening lid");
-      moveServo(seropen);
-    } 
-    else if (myservo.read() != serclose) {
-      Serial.println("Closing lid due to obs");
-      moveServo(serclose);
+  else if (stat2 == 0) {
+    for ( ; pos != serclose; pos = pos-1) {
+      //Serial.println("Lid is closing...");
+      Serial.println(readCurrent());
+      myservo.write(pos);
+      int pos = myservo.read();
+      delay(20);
+      if (float cur = abs(readCurrent())>thresholddown) {
+        Serial.println(readCurrent());
+        Serial.print("obstacle detect, lid open");
+        moveServo(seropen);
+        stat2=1;
+        return;
+      }
     }
   }
 }

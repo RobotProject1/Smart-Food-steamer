@@ -89,25 +89,13 @@ void moveServo(int targetPos) {
   if (currentPos < targetPos) {
     for (int pos = currentPos; pos <= targetPos; pos++) {
       myservo.write(pos);
-      delay(20);
-      
-      float cur = readCurrent();
-      if (cur > threshold) {
-        Serial.println("⚠️ Obstacle detected! Stopping servo.");
-        return;
-      }
+      delay(8);
     }
   } 
   else if (currentPos > targetPos) {
     for (int pos = currentPos; pos >= targetPos; pos--) {
       myservo.write(pos);
       delay(20);
-      
-      float cur = readCurrent();
-      if (cur > threshold) {
-        Serial.println("⚠️ Obstacle detected! Stopping servo.");
-        return;
-      }
     }
   }
 }
