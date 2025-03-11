@@ -1,89 +1,120 @@
-#include <PID_v1.h>
 #include <Servo.h>
-#include "VEGA_MLX90614.h"
 
 // Object initialization
 Servo myservo;
-VEGA_MLX90614 mlx(18, 19);
 
 // Pin assignments
 const int buzz = 3;  // Buzzer pin
+const int touchpad2 = 1;
 
-// Initial values
-int stat = 0;
+// Servo positions
 const int seropen = 130;
 const int serclose = 0;
-const float kt = 5;
 
-const int SAMPLES = 10;
-float s_val[SAMPLES];
-float threshold = 0.0;
+// Stall detection threshold (adjust based on your servo specs)
+const float threshold = 1.2;
+
+// Moving average for current reading
+const int numReadings = 10;
+float readings[numReadings] = {0};  
+int readIndex = 0;
+float total = 0;
+float maxCurrent = 0;
+unsigned long lastPrintTime = 0;
+
+// Touchpad state
+int stat2 = 0;
 
 void setup() {
   Serial.begin(9600);
   myservo.attach(6);
   pinMode(buzz, OUTPUT);
+  pinMode(touchpad2, INPUT);
+
+  Serial.println("Avg Current (A), Max Current (A)");
+
+  // Initialize current readings array
+  for (int i = 0; i < numReadings; i++) {
+    readings[i] = 0;
+  }
 }
 
 void loop() {
-  moveServo(seropen);
-  delay(2000);  // Wait for 2 seconds
-  moveServo(serclose);
-  delay(2000);  // Wait for 2 seconds
+  checkTouchpad2();       // Check touchpad input
+  updateServoState();     // Control servo based on state
 }
 
+// Function to read current from sensor
 float readCurrent() {
   int adc = analogRead(A1);
   float voltage = adc * 5.0 / 1023.0;
-  float current = (voltage - 2.5) / 0.185;
+  float current = (voltage - 2.5) / 0.185;  // Adjust 0.185 based on your sensor specs
   return current;
 }
 
-float calculateMean(float arr[], int size) {
-  float sum = 0;
-  for (int i = 0; i < size; i++) {
-    sum += arr[i];
-  }
-  return sum / size;
-}
-
-float calculateSD(float arr[], int size, float mean) {
-  float sumSquaredDiffs = 0;
-  for (int i = 0; i < size; i++) {
-    sumSquaredDiffs += pow(arr[i] - mean, 2);
-  }
-  return sqrt(sumSquaredDiffs / size);
-}
-
+// Function to move servo with stall current detection
 void moveServo(int targetPos) {
   int currentPos = myservo.read();
-  int step = (currentPos < targetPos) ? 1 : -1;
+  float stallCurrent = 0;  // Track max current during movement
 
-  for (int pos = currentPos; pos != targetPos + step; pos += step) {
-    myservo.write(pos);
-    delay(10);
+  Serial.println("Moving servo...");
 
-    // Collect SAMPLES for current measurement
-    for (int i = 0; i < SAMPLES; i++) {
-      s_val[i] = readCurrent();
+  if (currentPos < targetPos) {
+    for (int pos = currentPos; pos <= targetPos; pos++) {
+      myservo.write(pos);
+      delay(20);
+
+      float cur = readCurrent();
+      if (cur > stallCurrent) {
+        stallCurrent = cur;  // Capture peak stall current
+      }
     }
-    float cur = readCurrent();
-    float mean = calculateMean(s_val, SAMPLES);
-    float sd = calculateSD(s_val, SAMPLES, mean);
-    threshold = calibrateThreshold(mean, sd);
+  } 
+  else if (currentPos > targetPos) {
+    for (int pos = currentPos; pos >= targetPos; pos--) {
+      myservo.write(pos);
+      delay(20);
 
-    if (cur > threshold) {
-      Serial.println("Obstacle detected!");
-      Serial.println(threshold);
-      Serial.println(cur);
-      return;  // Stop movement if obstacle is found
+      float cur = readCurrent();
+      if (cur > stallCurrent) {
+        stallCurrent = cur;
+      }
     }
   }
 
-  // Ensure final position is set
-  myservo.write(targetPos);
+  // Log stall current
+  Serial.print("Stall Current (A): ");
+  Serial.println(stallCurrent, 3);
 }
 
-float calibrateThreshold(float mean, float sd) {
-  return mean + (kt * sd);
+// Function to check touchpad input and toggle state
+void checkTouchpad2() {
+  if (digitalRead(touchpad2) == HIGH) {
+    tone(buzz, 3000, 100);
+    stat2 = !stat2;
+    delay(100);
+  }
+}
+
+// Function to control servo based on touchpad state
+void updateServoState() {
+  float cur = readCurrent();
+
+  if (stat2 == 1) { // Lid is open
+    if (cur < threshold && myservo.read() != seropen) {
+      Serial.println("Closing lid...");
+      moveServo(serclose);
+      stat2 = 0;
+    } else if (myservo.read() != seropen) {
+      moveServo(seropen);
+    }
+  } else { // Lid is closed
+    if (cur < threshold && myservo.read() != serclose) {
+      Serial.println("Opening lid...");
+      moveServo(seropen);
+      stat2 = 1;
+    } else if (myservo.read() != serclose) {
+      moveServo(serclose);
+    }
+  }
 }

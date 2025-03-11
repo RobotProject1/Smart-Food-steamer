@@ -23,7 +23,7 @@ int stat3 = 0;
 
 int valtp2 = 0;
 int stat2 = 0;
-int seropen = 90;
+int seropen = 130;
 int serclose = 0;
 
 const int SAMPLES = 10;
