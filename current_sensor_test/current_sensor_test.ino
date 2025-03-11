@@ -114,26 +114,42 @@ void checkTouchpad2() {
   }
 }
 
+// // Function to control servo based on touchpad state
+// void updateServoState() {
+//   float cur = readCurrent();
+
+//   if (stat2 == 1) { // Lid is open
+//     if (cur < threshold && myservo.read() != seropen) {
+//       Serial.println("Closing lid...");
+//       moveServo(serclose);
+//       stat2 = 0;
+//     } else if (myservo.read() != seropen) {
+//       moveServo(seropen);
+//     }
+//   } 
+//   if (stat2 == 0) { // Lid is closed
+//     if (cur < threshold && myservo.read() != serclose) {
+//       Serial.println("Opening lid...");
+//       moveServo(seropen);
+//       stat2 = 1;
+//     } else if (myservo.read() != serclose) {
+//       moveServo(serclose);
+//     }
+//   }
+// }
+
 // Function to control servo based on touchpad state
 void updateServoState() {
   float cur = readCurrent();
 
   if (stat2 == 1) { // Lid is open
-    if (cur < threshold && myservo.read() != seropen) {
-      Serial.println("Closing lid...");
+      Serial.println("Opening lid...");
       moveServo(serclose);
       stat2 = 0;
-    } else if (myservo.read() != seropen) {
-      moveServo(seropen);
-    }
-  } 
   if (stat2 == 0) { // Lid is closed
-    if (cur < threshold && myservo.read() != serclose) {
       Serial.println("Opening lid...");
       moveServo(seropen);
       stat2 = 1;
-    } else if (myservo.read() != serclose) {
-      moveServo(serclose);
     }
   }
-}
+} 
