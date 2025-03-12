@@ -133,21 +133,21 @@ float readCurrent() {
   return current;
 }
 
-// float calculateMean(float arr[], int size) {
-//   float sum = 0;
-//   for (int i = 0; i < size; i++) {
-//     sum += arr[i];
-//   }
-//   return sum / size;
-// }
+float calculateMean(float arr[], int size) {
+  float sum = 0;
+  for (int i = 0; i < size; i++) {
+    sum += arr[i];
+  }
+  return sum / size;
+}
 
-// float calculateSD(float arr[], int size, float mean) {
-//   float sumSquaredDiffs = 0;
-//   for (int i = 0; i < size; i++) {
-//     sumSquaredDiffs += pow(arr[i] - mean, 2);
-//   }
-//   return sqrt(sumSquaredDiffs / size);  // Population SD (use (size-1) for sample SD)
-// }
+float calculateSD(float arr[], int size, float mean) {
+  float sumSquaredDiffs = 0;
+  for (int i = 0; i < size; i++) {
+    sumSquaredDiffs += pow(arr[i] - mean, 2);
+  }
+  return sqrt(sumSquaredDiffs / size);  // Population SD (use (size-1) for sample SD)
+}
 
 // Function to update servo state based on stat
 // void updateServoState() {
@@ -201,7 +201,7 @@ void updateServoStatenocurrent() {
 }
 
 void updateServoState() {
-  float cur = abs(readCurrent());  // Read the current value
+  float cur = readCurrent();  // Read the current value
   int pos = myservo.read();
 
   updateCurrentBuffer(cur);  // Store new value in both buffers
@@ -216,11 +216,11 @@ void updateServoState() {
       myservo.write(pos);
       int pos = myservo.read();
       delay(8);
-      cur = abs(readCurrent());
+      cur = readCurrent();
       updateCurrentBuffer(cur);
       Serial.print("Current: "); Serial.println(cur);
       Serial.print("ThreshUp: "); Serial.println(dynamicThreshUp);
-      if (cur > dynamicThreshUp) {
+      if (cur < dynamicThreshUp) {
         Serial.print("obstacle detect, lid closing :");
         Serial.println(cur);
         moveServo(serclose);
@@ -233,17 +233,16 @@ void updateServoState() {
     if (pos==serclose) {memset(bufferDown, 0, sizeof(bufferDown));}
     for ( ; pos != serclose; pos = pos-1) {
       //Serial.println("Lid is closing...");
-      Serial.println(readCurrent());
       myservo.write(pos);
       int pos = myservo.read();
       delay(20);
-      cur = abs(readCurrent());
+      cur = readCurrent();
       updateCurrentBuffer(cur);
 
       Serial.print("Current: "); Serial.println(cur);
       Serial.print("ThreshDown: "); Serial.println(dynamicThreshDown);
 
-      if (cur>dynamicThreshDown) {
+      if (cur<dynamicThreshDown) {
         Serial.print("obstacle detect, lid open");
         Serial.println(cur);
         moveServo(seropen);
@@ -264,8 +263,16 @@ float calculateThreshold(float arr[], int count) {
     // return (sum / count) + 0.5;  // Adjust margin as needed
     return 100.0;
   } else {
+    float min = 0;
+    for (int i=1; i<6; i++){
+      if (arr[i] < min){
+      min = arr[i];
+      }
+    }
     // Use median after 10 readings
-    return calculateMedian(arr) + 0.5;
+    return calculateMedian(arr) - 0.5;
+    // return calculateMedian(arr) - kl*(calculateMedian(arr)-min);
+    // return calculateMean(arr,10) - kl*calculateSD(arr,10,calculateMean(arr,10));
   }
 }
 
