@@ -71,7 +71,6 @@ void setup() {
   // lidPID.SetMode(AUTOMATIC);
   tempPID.SetMode(AUTOMATIC);
 
-<<<<<<< HEAD
   // humidity and fan
   Wire.begin();
   pinMode(RELAY_PIN, OUTPUT);
@@ -92,10 +91,8 @@ void setup() {
     default:
       Serial.println("Found UNKNOWN sensor! Error!");
   }
-=======
   // OLED setup
   displaySetup();
->>>>>>> 99fea28067412e7b08febc56636365750993dd82
 }
 
 void loop() {
