@@ -5,6 +5,12 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
+#define BUFFER_SIZE 10
+float bufferUp[BUFFER_SIZE]={0};
+float bufferDown[BUFFER_SIZE]={0};
+int bufferIndexUp=0;
+int bufferIndexDown=0;
+
 Servo myservo;
 VEGA_MLX90614 mlx(18, 19);
 Adafruit_SSD1306 display(4);
@@ -194,16 +200,25 @@ void updateServoStatenocurrent() {
 }
 
 void updateServoState() {
-  float cur = readCurrent();  // Read the current value
+  float cur = abs(readCurrent());  // Read the current value
   int pos = myservo.read();
+
+  updateCurrentBuffer(cur);  // Store new value in both buffers
+
+  float dynamicThreshUp = calculateThreshold(bufferUp,bufferIndexUp);  // Adjust margin as needed
+  float dynamicThreshDown = calculateThreshold(bufferDown,bufferIndexDown);  // Adjust margin
+
   if (stat2 == 1) {
     for ( ; pos < seropen-10; pos += 3) {
       //Serial.println("Lid is opening...");
       myservo.write(pos);
       int pos = myservo.read();
       delay(8);
-      Serial.println(readCurrent());
-      if (float cur = abs(readCurrent())>thresholdup) {
+      cur = abs(readCurrent());
+      updateCurrentBuffer(cur);
+      Serial.print("Current: "); Serial.println(cur);
+      Serial.print("ThreshUp: "); Serial.println(dynamicThreshUp);
+      if (cur > dynamicThreshUp) {
         Serial.print("obstacle detect, lid closing :");
         Serial.println(cur);
         moveServo(serclose);
@@ -219,13 +234,67 @@ void updateServoState() {
       myservo.write(pos);
       int pos = myservo.read();
       delay(20);
-      if (float cur = abs(readCurrent())>thresholddown) {
-        Serial.println(readCurrent());
+      cur = abs(readCurrent());
+      updateCurrentBuffer(cur);
+
+      Serial.print("Current: "); Serial.println(cur);
+      Serial.print("ThreshDown: "); Serial.println(dynamicThreshDown);
+
+      if (cur>dynamicThreshDown) {
         Serial.print("obstacle detect, lid open");
+        Serial.println(cur);
         moveServo(seropen);
         stat2=1;
         return;
       }
     }
   }
+}
+
+float calculateThreshold(float arr[], int count) {
+  if (count < BUFFER_SIZE) {
+    // // Use mean if buffer is not full yet
+    // float sum = 0;
+    // for (int i = 0; i < count; i++) {
+    //   sum += arr[i];
+    // }
+    // return (sum / count) + 0.5;  // Adjust margin as needed
+    return 100.0;
+  } else {
+    // Use median after 10 readings
+    return calculateMedian(arr) + 0.5;
+  }
+}
+
+float calculateMedian(float arr[]) {
+  float temp[BUFFER_SIZE];
+  memcpy(temp, arr, sizeof(temp));  // Copy array to avoid modifying original
+
+  // Insertion Sort (since BUFFER_SIZE is small, this is efficient)
+  for (int i = 1; i < BUFFER_SIZE; i++) {
+    float key = temp[i];
+    int j = i - 1;
+
+    // Move elements that are greater than key
+    while (j >= 0 && temp[j] > key) {
+      temp[j + 1] = temp[j];
+      j = j - 1;
+    }
+    temp[j + 1] = key;
+  }
+
+  // Return the median value
+  if (BUFFER_SIZE % 2 == 0) {
+    return (temp[BUFFER_SIZE / 2 - 1] + temp[BUFFER_SIZE / 2]) / 2.0;
+  } else {
+    return temp[BUFFER_SIZE / 2];
+  }
+}
+
+void updateCurrentBuffer(float value) {
+  bufferUp[bufferIndexUp] = value;
+  bufferDown[bufferIndexDown] = value;
+
+  bufferIndexUp = (bufferIndexUp + 1) % BUFFER_SIZE;  // Circular buffer
+  bufferIndexDown = (bufferIndexDown + 1) % BUFFER_SIZE;
 }
