@@ -5,7 +5,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-#define BUFFER_SIZE 10
+#define BUFFER_SIZE 5
 float bufferUp[BUFFER_SIZE]={0};
 float bufferDown[BUFFER_SIZE]={0};
 int bufferIndexUp=0;
@@ -47,8 +47,8 @@ float kt = 2;
 // double Kp = 2, Ki = 5, Kd = 1;
 // PID tempPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
-float thresholdup = 3; // ไว้มาแก้
-float thresholddown = 3.2; // ไว้มาแก้
+float thresholdup = -6; // ไว้มาแก้
+float thresholddown = -3.6; // ไว้มาแก้
 
 void setup() {
   stat2 = 0;
@@ -210,7 +210,7 @@ void updateServoState() {
   float dynamicThreshDown = calculateThreshold(bufferDown,bufferIndexDown);  // Adjust margin
 
   if (stat2 == 1) {
-    if (pos==seropen-10) {memset(bufferUp, 0, sizeof(bufferUp));}
+    //if (pos==seropen) {memset(bufferUp, 0, sizeof(bufferUp));}
     for ( ; pos < seropen-10; pos += 3) {
       //Serial.println("Lid is opening...");
       myservo.write(pos);
@@ -220,7 +220,7 @@ void updateServoState() {
       updateCurrentBuffer(cur);
       Serial.print("Current: "); Serial.println(cur);
       Serial.print("ThreshUp: "); Serial.println(dynamicThreshUp);
-      if (cur < dynamicThreshUp) {
+      if (cur < thresholdup) {
         Serial.print("obstacle detect, lid closing :");
         Serial.println(cur);
         moveServo(serclose);
@@ -230,7 +230,7 @@ void updateServoState() {
     }
   } 
   else if (stat2 == 0) {
-    if (pos==serclose) {memset(bufferDown, 0, sizeof(bufferDown));}
+    //if (pos==serclose) {memset(bufferDown, 0, sizeof(bufferDown));}
     for ( ; pos != serclose; pos = pos-1) {
       //Serial.println("Lid is closing...");
       myservo.write(pos);
@@ -242,7 +242,7 @@ void updateServoState() {
       Serial.print("Current: "); Serial.println(cur);
       Serial.print("ThreshDown: "); Serial.println(dynamicThreshDown);
 
-      if (cur<dynamicThreshDown) {
+      if (cur<thresholddown) {
         Serial.print("obstacle detect, lid open");
         Serial.println(cur);
         moveServo(seropen);
@@ -261,7 +261,7 @@ float calculateThreshold(float arr[], int count) {
     //   sum += arr[i];
     // }
     // return (sum / count) + 0.5;  // Adjust margin as needed
-    return 100.0;
+    return -100.0;
   } else {
     float min = 0;
     for (int i=1; i<6; i++){
@@ -270,7 +270,7 @@ float calculateThreshold(float arr[], int count) {
       }
     }
     // Use median after 10 readings
-    return calculateMedian(arr) - 0.5;
+    return calculateMedian(arr) - 1.5;
     // return calculateMedian(arr) - kl*(calculateMedian(arr)-min);
     // return calculateMean(arr,10) - kl*calculateSD(arr,10,calculateMean(arr,10));
   }
