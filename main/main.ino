@@ -62,6 +62,9 @@ void setup() {
   // PID mode activation
   // lidPID.SetMode(AUTOMATIC);
   tempPID.SetMode(AUTOMATIC);
+
+  // OLED setup
+  displaySetup();
 }
 
 void loop() {
@@ -70,7 +73,6 @@ void loop() {
   updateTempPID();       // Placeholder for temp PID logic
   checkTouchpad1();     // Check touchpad and toggle state
   checkTouchpad3();     // Check touchpad and toggle state
-  displaySetup();       // Setup for OLED display
   delay(300);            // Main loop delay
 }
 
@@ -163,28 +165,54 @@ void updateTempPID() {
 }
 
 void drawMode() {
-  display.fillRect(0, 20, 50, 20, SSD1306_BLACK);  // Clear previous mode text
-  display.setCursor(5, 10);
-  display.print("MODE:");
-  display.setCursor(5, 30);
+  display.fillRect(0, 0, 80, 40, SSD1306_BLACK);
+  display.setCursor(5, 0);
+  display.print("Mode:");
+  display.setCursor(5, 17);
   display.print(stat1 == 0 ? "MANUAL" : "AUTO");
   display.display();
 }
 
 void drawLightBulb() {
-  int x = 110, y = 12;
-  display.fillRect(100, 0, 28, 25, SSD1306_BLACK); // Clear previous lightbulb
+  display.fillRect(75, 0, 55, 80, SSD1306_BLACK);
+
+  display.fillRect(99, 24, 12, 7, SSD1306_WHITE);
+  display.fillRect(101, 25, 8, 5, SSD1306_BLACK);
+  display.drawLine(101, 26, 109, 26, SSD1306_WHITE);
+  display.drawLine(101, 28, 109, 28, SSD1306_WHITE); // Base
+  display.drawLine(98, 4, 111, 4, SSD1306_WHITE); // Top
+
+  display.drawLine(98, 24, 95, 19, SSD1306_WHITE); // Left bottom1
+  display.drawLine(95, 19, 90, 12, SSD1306_WHITE); // Left bottom2
+  display.drawLine(90, 12, 90, 9, SSD1306_WHITE); // Left side
+  display.drawLine(90, 9, 92, 6, SSD1306_WHITE); // Left top1
+  display.drawLine(92, 6, 97, 5, SSD1306_WHITE); // Left top2
+
+  display.drawLine(111, 24, 114, 19, SSD1306_WHITE); // Right bottom1
+  display.drawLine(114, 19, 119, 12, SSD1306_WHITE); // Right bottom2
+  display.drawLine(119, 12, 119, 9, SSD1306_WHITE); // Right side
+  display.drawLine(119, 9, 117, 6, SSD1306_WHITE); // Right top1
+  display.drawLine(117, 6, 112, 5, SSD1306_WHITE); // Right top2
+
   if (stat3 == 1) {
-    // Light ON - Draw glowing bulb
-    display.drawCircle(x, y, 9, SSD1306_WHITE);
-    display.fillCircle(x, y, 6, SSD1306_WHITE);
-    display.drawLine(x, 18, x, 24, SSD1306_WHITE);
-    display.drawLine(x - 3, 24, x + 3, 24, SSD1306_WHITE);
-  } else {
-    // Light OFF - Only draw bulb outline
-    display.drawCircle(x, y, 9, SSD1306_WHITE);
-    display.drawLine(x, 18, x, 24, SSD1306_WHITE);
-    display.drawLine(x - 3, 24, x + 3, 24, SSD1306_WHITE);
+  display.fillRect(101, 26, 8, 4, SSD1306_WHITE);
+  display.fillRect(100, 6, 10, 2, SSD1306_WHITE);
+  display.drawLine(98, 7, 112, 7, SSD1306_WHITE);
+  display.fillCircle(104, 14, 7, SSD1306_WHITE);
+  display.fillCircle(105, 14, 7, SSD1306_WHITE);
+  display.fillRect(95, 8, 20, 1, SSD1306_WHITE);
+  display.fillRect(94, 9, 22, 3, SSD1306_WHITE);
+  display.fillRect(95, 12, 20, 2, SSD1306_WHITE);
+  display.drawLine(96, 14, 113, 14, SSD1306_WHITE);
+  display.drawLine(101, 21, 109, 21, SSD1306_WHITE);
+  display.drawLine(101, 22, 108, 22, SSD1306_WHITE); // Fill
+
+  display.drawLine(92, 1, 95, 2, SSD1306_WHITE);
+  display.drawLine(117, 1, 114, 2, SSD1306_WHITE);
+  display.drawLine(82, 11, 86, 11, SSD1306_WHITE);
+  display.drawLine(123, 11, 127, 11, SSD1306_WHITE);
+  display.drawLine(88, 21, 91, 20, SSD1306_WHITE);
+  display.drawLine(121, 21, 118, 20, SSD1306_WHITE); // Sparkles
   }
   display.display();
 }
@@ -209,10 +237,10 @@ void checkTouchpad3() {
   }
 }
 
-// Function to update OLED display (placeholder)
 void displaySetup() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   display.clearDisplay();
+  display.setRotation(2);
   display.setTextSize(2);
   display.setTextColor(SSD1306_WHITE);
   drawMode();
