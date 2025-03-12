@@ -47,8 +47,8 @@ float kt = 2;
 // double Kp = 2, Ki = 5, Kd = 1;
 // PID tempPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
-float thresholdup = -6; // ไว้มาแก้
-float thresholddown = -3.6; // ไว้มาแก้
+float thresholdup = -600; // ไว้มาแก้
+float thresholddown = -3600; // ไว้มาแก้
 
 void setup() {
   stat2 = 0;
@@ -219,7 +219,7 @@ void updateServoState() {
       cur = readCurrent();
       updateCurrentBuffer(cur);
       Serial.print("Current: "); Serial.println(cur);
-      Serial.print("ThreshUp: "); Serial.println(dynamicThreshUp);
+      //Serial.print("ThreshUp: "); Serial.println(dynamicThreshUp);
       if (cur < thresholdup) {
         Serial.print("obstacle detect, lid closing :");
         Serial.println(cur);
@@ -240,7 +240,7 @@ void updateServoState() {
       updateCurrentBuffer(cur);
 
       Serial.print("Current: "); Serial.println(cur);
-      Serial.print("ThreshDown: "); Serial.println(dynamicThreshDown);
+      //Serial.print("ThreshDown: "); Serial.println(dynamicThreshDown);
 
       if (cur<thresholddown) {
         Serial.print("obstacle detect, lid open");
