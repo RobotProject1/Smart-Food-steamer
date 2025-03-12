@@ -4,6 +4,14 @@
 #include "VEGA_MLX90614.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <BME280I2C.h>
+
+// humidity and fan
+#define SERIAL_BAUD 115200
+#define RELAY_PIN 2  // Relay connected to digital pin 7
+#define HUMIDITY_THRESHOLD 60.0  
+BME280I2C bme;  // Default : forced mode, standby time = 1000 ms
+                  // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
 
 Servo myservo;
 VEGA_MLX90614 mlx(18, 19);
@@ -62,9 +70,38 @@ void setup() {
   // PID mode activation
   // lidPID.SetMode(AUTOMATIC);
   tempPID.SetMode(AUTOMATIC);
+
+  // humidity and fan
+  Wire.begin();
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, HIGH);  // connect to NC instead of NOEnsure relay is OFF initially
+
+  while (!bme.begin()) {
+    Serial.println("Could not find BME280 sensor!");
+    delay(1000);
+  }
+
+  switch (bme.chipModel()) {
+    case BME280::ChipModel_BME280:
+      Serial.println("Found BME280 sensor! Success.");
+      break;
+    case BME280::ChipModel_BMP280:
+      Serial.println("Found BMP280 sensor! No Humidity available.");
+      break;
+    default:
+      Serial.println("Found UNKNOWN sensor! Error!");
+  }
 }
 
 void loop() {
+  // humidity
+  float temp, hum, pres;
+  BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
+  BME280::PresUnit presUnit(BME280::PresUnit_Pa);
+  bme.read(pres, temp, hum, tempUnit, presUnit);
+  printBME280Data(temp, hum, pres);
+  Ventilator_control(hum);  // Control ventilator based on humidity
+
   checkTouchpad2();       // Check touchpad and toggle state
   updateServoState();    // Update servo position based on state
   updateTempPID();       // Placeholder for temp PID logic
@@ -219,4 +256,35 @@ void displaySetup() {
   drawLightBulb();
   // Add OLED display code here (e.g., using SSD1306 library)
   // Example: display temperature, servo position, or status
+}
+
+void updatesystem() {
+  //
+}
+
+void sevensegdisplay() {
+  //
+}
+
+void Ventilator_control(float hum) {
+  if (hum > HUMIDITY_THRESHOLD) {
+    digitalWrite(RELAY_PIN, LOW);  // Turn ON ventilator
+    Serial.println("Ventilator ON");
+  } else {
+    digitalWrite(RELAY_PIN, HIGH);  // Turn OFF ventilator
+    Serial.println("Ventilator OFF");
+  }
+}
+void printBME280Data(float temp, float hum, float pres) {
+  Serial.print("Temp: ");
+  Serial.print(temp);
+  Serial.print(" °C\t");
+
+  Serial.print("Humidity: ");
+  Serial.print(hum);
+  Serial.print("% RH\t");
+
+  Serial.print("Pressure: ");
+  Serial.print(pres);
+  Serial.println(" Pa");
 }
