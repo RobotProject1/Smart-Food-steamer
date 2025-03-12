@@ -10,6 +10,7 @@ float bufferUp[BUFFER_SIZE]={0};
 float bufferDown[BUFFER_SIZE]={0};
 int bufferIndexUp=0;
 int bufferIndexDown=0;
+float kl=1.3;
 
 Servo myservo;
 VEGA_MLX90614 mlx(18, 19);
@@ -209,6 +210,7 @@ void updateServoState() {
   float dynamicThreshDown = calculateThreshold(bufferDown,bufferIndexDown);  // Adjust margin
 
   if (stat2 == 1) {
+    if (pos==seropen-10) {memset(bufferUp, 0, sizeof(bufferUp));}
     for ( ; pos < seropen-10; pos += 3) {
       //Serial.println("Lid is opening...");
       myservo.write(pos);
@@ -228,6 +230,7 @@ void updateServoState() {
     }
   } 
   else if (stat2 == 0) {
+    if (pos==serclose) {memset(bufferDown, 0, sizeof(bufferDown));}
     for ( ; pos != serclose; pos = pos-1) {
       //Serial.println("Lid is closing...");
       Serial.println(readCurrent());
