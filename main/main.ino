@@ -5,6 +5,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <BME280I2C.h>
+#include "Adafruit_LEDBackpack.h"
 
 // humidity and fan
 #define SERIAL_BAUD 115200
@@ -14,7 +15,9 @@ BME280I2C bme;  // Default : forced mode, standby time = 1000 ms
                   // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
 
 Servo myservo;
+
 VEGA_MLX90614 mlx(18, 19);
+Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4();
 Adafruit_SSD1306 display(4);
 
 // Pin
@@ -93,9 +96,15 @@ void setup() {
   }
   // OLED setup
   displaySetup();
+
+  // 7seg setup
+  alpha4.begin(0x70); 
+  updatesevensegdisplay(25.5); // update 7segment display
 }
 
 void loop() {
+  // update system
+  updatesystem();
   // humidity
   float temp, hum, pres;
   BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
@@ -106,10 +115,11 @@ void loop() {
 
   checkTouchpad2();       // Check touchpad and toggle state
   updateServoState();    // Update servo position based on state
-  updateTempPID();       // Placeholder for temp PID logic
+  //updateTempPID();       // Placeholder for temp PID logic
   checkTouchpad1();     // Check touchpad and toggle state
   checkTouchpad3();     // Check touchpad and toggle state
   delay(300);            // Main loop delay
+  updatesevensegdisplay(25.5); // update 7segment display
 }
 
 // Function to check touchpad and toggle state
@@ -289,7 +299,12 @@ void updatesystem() {
   //
 }
 
-void sevensegdisplay() {
+void updatesevensegdisplay(float num) {
+  char buffer[5]; // Buffer to hold "25.0"
+  dtostrf(num, 4, 1, buffer);  // Convert float to string with 1 decimal place
+  for (int i = 0; i < 4; i++) {
+    alpha4.writeDigitAscii(i, buffer[i]);
+  } 
   //
 }
 
