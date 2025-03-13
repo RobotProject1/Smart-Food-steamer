@@ -14,6 +14,10 @@
 BME280I2C bme;  // Default : forced mode, standby time = 1000 ms
                   // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
 
+#define RED_PIN 9
+#define GREEN_PIN 10
+#define BLUE_PIN 11
+
 Servo myservo;
 
 VEGA_MLX90614 mlx(18, 19);
@@ -79,21 +83,21 @@ void setup() {
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, HIGH);  // connect to NC instead of NOEnsure relay is OFF initially
 
-  while (!bme.begin()) {
-    Serial.println("Could not find BME280 sensor!");
-    delay(1000);
-  }
+  // while (!bme.begin()) {
+  //   Serial.println("Could not find BME280 sensor!");
+  //   delay(1000);
+  // }
 
-  switch (bme.chipModel()) {
-    case BME280::ChipModel_BME280:
-      Serial.println("Found BME280 sensor! Success.");
-      break;
-    case BME280::ChipModel_BMP280:
-      Serial.println("Found BMP280 sensor! No Humidity available.");
-      break;
-    default:
-      Serial.println("Found UNKNOWN sensor! Error!");
-  }
+  // switch (bme.chipModel()) {
+  //   case BME280::ChipModel_BME280:
+  //     Serial.println("Found BME280 sensor! Success.");
+  //     break;
+  //   case BME280::ChipModel_BMP280:
+  //     Serial.println("Found BMP280 sensor! No Humidity available.");
+  //     break;
+  //   default:
+  //     Serial.println("Found UNKNOWN sensor! Error!");
+  // }
   // OLED setup
   displaySetup();
 
@@ -110,7 +114,7 @@ void loop() {
   BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
   BME280::PresUnit presUnit(BME280::PresUnit_Pa);
   bme.read(pres, temp, hum, tempUnit, presUnit);
-  printBME280Data(temp, hum, pres);
+  // printBME280Data(temp, hum, pres);
   Ventilator_control(hum);  // Control ventilator based on humidity
 
   checkTouchpad2();       // Check touchpad and toggle state
@@ -120,6 +124,21 @@ void loop() {
   checkTouchpad3();     // Check touchpad and toggle state
   delay(300);            // Main loop delay
   updatesevensegdisplay(25.5); // update 7segment display
+    // สีแดง
+  setColor(255, 0, 0);
+  Serial.println("red");
+  delay(1000);
+
+
+  // สีเขียว
+  setColor(0, 255, 0);
+  Serial.println("green");
+  delay(1000);
+
+  // สีน้ำเงิน
+  setColor(0, 0, 255);
+  Serial.println("Blue");
+  delay(1000);
 }
 
 // Function to check touchpad and toggle state
@@ -160,6 +179,11 @@ float readCurrent() {
   return current;
 }
 
+void setColor(int red, int green, int blue) {
+  analogWrite(RED_PIN, 255-red);   // Invert สีสำหรับ Common Anode
+  analogWrite(GREEN_PIN, 255-green);
+  analogWrite(BLUE_PIN, 255-blue);
+}
 // float calculateMean(float arr[], int size) {
 //   float sum = 0;
 //   for (int i = 0; i < size; i++) {
@@ -311,10 +335,10 @@ void updatesevensegdisplay(float num) {
 void Ventilator_control(float hum) {
   if (hum > HUMIDITY_THRESHOLD) {
     digitalWrite(RELAY_PIN, LOW);  // Turn ON ventilator
-    Serial.println("Ventilator ON");
+    // Serial.println("Ventilator ON");
   } else {
     digitalWrite(RELAY_PIN, HIGH);  // Turn OFF ventilator
-    Serial.println("Ventilator OFF");
+    // Serial.println("Ventilator OFF");
   }
 }
 void printBME280Data(float temp, float hum, float pres) {
