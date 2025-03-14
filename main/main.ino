@@ -94,7 +94,7 @@ void setup() {
   // humidity and fan
   Wire.begin();
   pinMode(F_RELAY_PIN, OUTPUT);
-  digitalWrite(F_RELAY_PIN, HIGH);  // connect to NC instead of NOEnsure relay is OFF initially
+  digitalWrite(F_RELAY_PIN, LOW);//connect to no (active high input)
   bme.begin();
 
   // LED in box
@@ -120,34 +120,72 @@ void setup() {
 
   // 7seg setup
   alpha4.begin(0x70); 
-  digitalWrite(F_RELAY_PIN, LOW);
+  
 }
 
 void loop() {
-  // update system
-
-  // humidity
-  Ventilator_control();  // Control ventilator based on humidity
-
-  checkTouchpad2();       // Check touchpad and toggle state
-  updateServoStatenoProtection();    // Update servo position based on state
-  checkTouchpad1();     // Check touchpad and toggle state
-  checkTouchpad3();     // Check touchpad and toggle state
-  updateSystem();       // Update system for PID and Manual
-  statusUpdate();       // Check if food's ready
-  updatesevensegdisplay(); // update 7segment display
-  delay(300);            // Main loop delay
-
+  //check
   Serial.print("oled touchpad1 state : "); Serial.println(stat1);
+  delay(2000);
   Serial.print("lid touchpad2 state : "); Serial.println(stat2);
+  delay(2000);
   Serial.print("light touchpad1 state : "); Serial.println(stat1);
+  delay(2000);
 
   Serial.print("lid degree : "); Serial.println(myservo.read());
+  delay(2000);
   Serial.print("temp from probe : "); Serial.println(ds.getTempC());
+  delay(2000);
   Serial.print("temp from IR : "); Serial.println(mlx.mlx90614ReadTargetTempC());
+  delay(2000);
   Serial.print("humidity from bme : ");Serial.println(hum);
+  delay(2000);
   Serial.print("Current from current sensor : "); Serial.println(readCurrent());
-  
+  delay(2000);
+
+  Serial.println("relay fan on");
+  digitalWrite(F_RELAY_PIN, HIGH);
+  delay(5000);
+  Serial.println("relay fan off");
+  digitalWrite(F_RELAY_PIN, LOW);
+  delay(5000);
+  Serial.println("relay light on");
+  digitalWrite(LIGHT, HIGH);
+  delay(5000);
+  Serial.println("relay light off");
+  digitalWrite(LIGHT, LOW);
+  delay(5000);
+  Serial.println("relay heater on");
+  digitalWrite(H_RELAY_PIN, HIGH);
+  delay(5000);
+  Serial.println("relay heater off");
+  digitalWrite(H_RELAY_PIN, LOW);
+  delay(5000);
+
+  Serial.println("Opening lid :");
+  moveServo(seropen);
+  delay(2000);
+  Serial.println("Closing lid :");
+  moveServo(serclose);
+  delay(2000);
+  Serial.println("7 SEG CHECK");
+  updatesevensegdisplay();
+  delay(2000);
+  Serial.println("buzzer");
+  tone(buzz, 3000, 5000);
+  delay(5000);
+
+  // update system
+  // main
+  // Ventilator_control();  // Control ventilator based on humidity
+  // checkTouchpad2();       // Check touchpad and toggle state
+  // updateServoStatenoProtection();    // Update servo position based on state
+  // checkTouchpad1();     // Check touchpad and toggle state
+  // checkTouchpad3();     // Check touchpad and toggle state
+  // updateSystem();       // Update system for PID and Manual
+  // statusUpdate();       // Check if food's ready
+  // updatesevensegdisplay(); // update 7segment display
+  // delay(300);            // Main loop delay
 }
 
 // Function to check touchpad and toggle state
@@ -182,7 +220,7 @@ void moveServo(int targetPos) {
 // }
 
 float readCurrent() {
-  int adc = analogRead(A1);
+  int adc = analogRead(A3);
   float voltage = adc * 5.0 / 1023.0;
   float current = (voltage - 2.5) / 0.185;
   return current;
