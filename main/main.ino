@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <PID_v1.h>
 #include <Servo.h>
-#include "VEGA_MLX90614.h"
+//#include "VEGA_MLX90614.h"
 #include <Adafruit_MLX90614.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -39,6 +39,7 @@ int serclose = 15;
 // Temperature sensor (infrared)
 //VEGA_MLX90614 mlx(18, 19);
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
+
 
 // Displays
 Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4(); 
@@ -95,6 +96,8 @@ void setup() {
 
   // Initialize PID input
   digitalWrite(H_RELAY_PIN, LOW);
+
+  mlx.begin();
   Input = mlx.readObjectTempC(); // Read target temperature from MLX90614
 
   // Activate PID control
@@ -114,6 +117,7 @@ void setup() {
 
   // 7-segment display setup
   alpha4.begin(0x70); 
+
 }
 
 void loop() {
@@ -125,7 +129,8 @@ void loop() {
 
   // Serial.print("lid degree : "); Serial.println(myservo.read());
   // Serial.print("temp from probe : "); Serial.println(ds.getTempC());
-  // Serial.print("temp from IR : "); Serial.println(mlx.mlx90614ReadTargetTempC());
+  // Serial.print("object temp from IR : "); Serial.println((mlx.readObjectTempC());
+  // Serial.print("ambient temp from IR : "); Serial.println((mlx.readAmbientTempC());
   // BMEread(temp, hum, pres);
   // Serial.print("humidity from bme : ");Serial.println(hum);
   // Serial.print("Current from current sensor : "); Serial.println(readCurrent());
@@ -162,10 +167,6 @@ void loop() {
   // Serial.println("buzzer");
   // tone(buzz, 3000, 5000);
   // delay(5000);
-  Serial.print(".....");
-  // Serial.print("mlx.readObjectTempC()");Serial.println(mlx.readObjectTempC());
-  // Serial.print("mlx.readAmbientTempC()");Serial.println(mlx.readAmbientTempC());
-  delay(1000);
 
   // update system
   // main
@@ -251,8 +252,7 @@ void updateServoStatenoProtection() {
 
 // Function to handle temperature PID (placeholder)
 void updateTempPID() {
-  // Input = mlx.readObjectTempC();
-  Input = ds.getTempC();
+  Input = mlx.readObjectTempC();
   tempPID.Compute();
   pwm(Output);
 }
