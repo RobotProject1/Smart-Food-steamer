@@ -9,7 +9,8 @@
 
 // humidity and fan
 #define SERIAL_BAUD 115200
-#define RELAY_PIN 2  // Relay connected to digital pin 7
+#define F_RELAY_PIN 2  // Relay connected to digital pin 7
+#define H_RELAY_PIN 13 // Heater Relay
 #define HUMIDITY_THRESHOLD 60.0  
 BME280I2C bme;  // Default : forced mode, standby time = 1000 ms
                   // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
@@ -17,6 +18,9 @@ BME280I2C bme;  // Default : forced mode, standby time = 1000 ms
 #define RED_PIN 9
 #define GREEN_PIN 10
 #define BLUE_PIN 11
+
+#define LIGHT 12
+int statL = 0;
 
 Servo myservo;
 
@@ -51,9 +55,13 @@ float kt = 2;
 // PID lidPID(&lInput, &lOutput, &lSetpoint, lKp, lKi, lKd, DIRECT);
 
 // TEMP PID variables and setup
-double Setpoint, Input, Output;
+double Setpoint = 60, Input, Output;
 double Kp = 2, Ki = 5, Kd = 1;
 PID tempPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+
+float temp;
+float hum;
+float pres;
 
 float threshold = 1.2; // ไว้มาแก้
 
@@ -70,7 +78,8 @@ void setup() {
   pinMode(touchpad3, INPUT);
   pinMode(buzz, OUTPUT);
 
-  // Initial PID inputs
+  // Initial PID input
+  digitalWrite(H_RELAY_PIN, LOW);
   Input = mlx.mlx90614ReadTargetTempC(); // Temp input
   // lInput = myservo.read();               // Servo current position
 
@@ -80,8 +89,12 @@ void setup() {
 
   // humidity and fan
   Wire.begin();
-  pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, HIGH);  // connect to NC instead of NOEnsure relay is OFF initially
+  pinMode(F_RELAY_PIN, OUTPUT);
+  digitalWrite(F_RELAY_PIN, HIGH);  // connect to NC instead of NOEnsure relay is OFF initially
+  bme.begin();
+
+  // LED in box
+  digitalWrite(LIGHT, LOW);
 
   // while (!bme.begin()) {
   //   Serial.println("Could not find BME280 sensor!");
@@ -108,37 +121,32 @@ void setup() {
 
 void loop() {
   // update system
-  updatesystem();
+
   // humidity
-  float temp, hum, pres;
-  BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
-  BME280::PresUnit presUnit(BME280::PresUnit_Pa);
-  bme.read(pres, temp, hum, tempUnit, presUnit);
-  // printBME280Data(temp, hum, pres);
-  Ventilator_control(hum);  // Control ventilator based on humidity
+  Ventilator_control();  // Control ventilator based on humidity
 
   checkTouchpad2();       // Check touchpad and toggle state
   updateServoState();    // Update servo position based on state
-  //updateTempPID();       // Placeholder for temp PID logic
   checkTouchpad1();     // Check touchpad and toggle state
   checkTouchpad3();     // Check touchpad and toggle state
-  delay(300);            // Main loop delay
+  updateSystem();       // Update system for PID and Manual
+  statusUpdate();       // Check if food's ready
   updatesevensegdisplay(25.5); // update 7segment display
-    // สีแดง
-  setColor(255, 0, 0);
-  Serial.println("red");
-  delay(1000);
+  delay(300);            // Main loop delay
+  //   // สีแดง
+  // setColor(255, 0, 0);
+  // Serial.println("red");
+  // delay(1000);
 
+  // // สีเขียว
+  // setColor(0, 255, 0);
+  // Serial.println("green");
+  // delay(1000);
 
-  // สีเขียว
-  setColor(0, 255, 0);
-  Serial.println("green");
-  delay(1000);
-
-  // สีน้ำเงิน
-  setColor(0, 0, 255);
-  Serial.println("Blue");
-  delay(1000);
+  // // สีน้ำเงิน
+  // setColor(0, 0, 255);
+  // Serial.println("Blue");
+  // delay(1000);
 }
 
 // Function to check touchpad and toggle state
@@ -226,7 +234,6 @@ void updateServoState() {
   }
 }
 
-
 // Function to handle temperature PID (placeholder)
 void updateTempPID() {
   Input = mlx.mlx90614ReadTargetTempC();
@@ -302,7 +309,11 @@ void checkTouchpad3() {
   if (valtp3 == 1) {
     tone(buzz, 3000, 100);
     stat3 = !stat3;
+    statL = !statL;
     drawMode();
+    if (statL == 1) {
+      digitalWrite(LIGHT, HIGH);
+    }
     delay(100);
   }
 }
@@ -319,8 +330,22 @@ void displaySetup() {
   // Example: display temperature, servo position, or status
 }
 
-void updatesystem() {
-  //
+void updateSystem() {
+  if (stat1 == 1) {
+    tempPID.SetMode(AUTOMATIC); // PID on
+    updateTempPID();
+  } else {
+    tempPID.SetMode(MANUAL); // PID off
+    digitalWrite(H_RELAY_PIN, HIGH);
+  }
+}
+
+void statusUpdate() {
+  if (Input == Setpoint) {
+    setColor(255, 0, 0);
+  } else {
+    setColor(0, 0, 0);
+  }
 }
 
 void updatesevensegdisplay(float num) {
@@ -329,19 +354,27 @@ void updatesevensegdisplay(float num) {
   for (int i = 0; i < 4; i++) {
     alpha4.writeDigitAscii(i, buffer[i]);
   } 
-  //
 }
 
-void Ventilator_control(float hum) {
+void Ventilator_control() {
+  BMEread(temp, hum, pres);
   if (hum > HUMIDITY_THRESHOLD) {
-    digitalWrite(RELAY_PIN, LOW);  // Turn ON ventilator
+    digitalWrite(F_RELAY_PIN, LOW);  // Turn ON ventilator
     // Serial.println("Ventilator ON");
   } else {
-    digitalWrite(RELAY_PIN, HIGH);  // Turn OFF ventilator
+    digitalWrite(F_RELAY_PIN, HIGH);  // Turn OFF ventilator
     // Serial.println("Ventilator OFF");
   }
 }
+
+void BMEread(float &temp, float &hum, float &pres) {
+  BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
+  BME280::PresUnit presUnit(BME280::PresUnit_Pa);
+  bme.read(pres, temp, hum, tempUnit, presUnit);
+}
+
 void printBME280Data(float temp, float hum, float pres) {
+  BMEread(temp, hum, pres);
   Serial.print("Temp: ");
   Serial.print(temp);
   Serial.print(" °C\t");
