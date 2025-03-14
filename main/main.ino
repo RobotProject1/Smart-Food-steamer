@@ -9,65 +9,74 @@
 #include <OneWire.h>
 #include <DS18B20.h>
 
-// humidity and fan
+// Serial communication
 #define SERIAL_BAUD 115200
-#define F_RELAY_PIN 7  // Relay connected to digital pin 7
-#define H_RELAY_PIN 13 // Heater Relay
-#define HUMIDITY_THRESHOLD 60.0  
-BME280I2C bme;  // Default : forced mode, standby time = 1000 ms
-                  // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
 
+// Relay and fan control
+#define F_RELAY_PIN 7   // Fan relay (digital pin 7)
+#define H_RELAY_PIN 13  // Heater relay
+#define HUMIDITY_THRESHOLD 60.0  
+
+// BME280 sensor (temperature, pressure, humidity)
+BME280I2C bme; // Default settings: forced mode, standby time = 1000 ms
+               // Oversampling: pressure ×1, temperature ×1, humidity ×1, filter off
+
+// RGB LED pins
 #define RED_PIN 9
 #define GREEN_PIN 10
 #define BLUE_PIN 11
 
+// Light control
 #define LIGHT 12
 int statL = 0;
 
+// Servo setup
 Servo myservo;
+int seropen = 135;
+int serclose = 15;
 
+// Temperature sensor (infrared)
 VEGA_MLX90614 mlx(18, 19);
-Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4();
+
+// Displays
+Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4(); 
 Adafruit_SSD1306 display(4);
 
-// Pin
+// Touchpad and buzzer
 const int touchpad1 = 0;
 const int touchpad2 = 1;
 const int touchpad3 = 2;
 const int buzz = 3;
 
-// Initial values
-int valtp1 = 0;
-int stat1 = 0;
-int valtp3 = 0;
-int stat3 = 0;
+// Touchpad state variables
+int valtp1 = 0, stat1 = 0;
+int valtp2 = 0, stat2 = 0;
+int valtp3 = 0, stat3 = 0;
 
-int valtp2 = 0;
-int stat2 = 0;
-int seropen = 135;
-int serclose = 15;
-
+// Sensor sampling
 const int SAMPLES = 10;
 float s_val[SAMPLES];
 float kt = 2;
 
-// // LID PID variables and setup
+// // LID PID variables and setup (commented out)
 // double lSetpoint, lInput, lOutput;
 // double lKp = 2, lKi = 5, lKd = 1;
 // PID lidPID(&lInput, &lOutput, &lSetpoint, lKp, lKi, lKd, DIRECT);
 
-// TEMP PID variables and setup
+// Temperature PID control
 double Setpoint = 60, Input, Output;
 double Kp = 2, Ki = 5, Kd = 1;
 PID tempPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
-float temp;
-float hum;
-float pres;
+// Environmental data
+float temp, hum, pres;
 
+// DS18B20 temperature sensor
 DS18B20 ds(4);
 
+// Threshold value (to be adjusted)
 float threshold = 1.2; // ไว้มาแก้
+
 
 void setup() {
   Serial.begin(9600);
@@ -82,45 +91,27 @@ void setup() {
   pinMode(touchpad3, INPUT);
   pinMode(buzz, OUTPUT);
 
-  // Initial PID input
+  // Initialize PID input
   digitalWrite(H_RELAY_PIN, LOW);
-  Input = mlx.mlx90614ReadTargetTempC(); // Temp input
-  // lInput = myservo.read();               // Servo current position
+  Input = mlx.mlx90614ReadTargetTempC(); // Read target temperature from MLX90614
 
-  // PID mode activation
-  // lidPID.SetMode(AUTOMATIC);
+  // Activate PID control
   tempPID.SetMode(AUTOMATIC);
 
-  // humidity and fan
+  // Humidity and fan setup
   Wire.begin();
   pinMode(F_RELAY_PIN, OUTPUT);
-  digitalWrite(F_RELAY_PIN, LOW);//connect to no (active high input)
+  digitalWrite(F_RELAY_PIN, LOW); // Fan relay (active high)
   bme.begin();
 
   // LED in box
   digitalWrite(LIGHT, LOW);
 
-  // while (!bme.begin()) {
-  //   Serial.println("Could not find BME280 sensor!");
-  //   delay(1000);
-  // }
-
-  // switch (bme.chipModel()) {
-  //   case BME280::ChipModel_BME280:
-  //     Serial.println("Found BME280 sensor! Success.");
-  //     break;
-  //   case BME280::ChipModel_BMP280:
-  //     Serial.println("Found BMP280 sensor! No Humidity available.");
-  //     break;
-  //   default:
-  //     Serial.println("Found UNKNOWN sensor! Error!");
-  // }
-  // OLED setup
+  // OLED display setup
   displaySetup();
 
-  // 7seg setup
+  // 7-segment display setup
   alpha4.begin(0x70); 
-  
 }
 
 void loop() {
@@ -177,26 +168,17 @@ void loop() {
 
   // update system
   // main
-  // Ventilator_control();  // Control ventilator based on humidity
-  // checkTouchpad2();       // Check touchpad and toggle state
-  // updateServoStatenoProtection();    // Update servo position based on state
   // checkTouchpad1();     // Check touchpad and toggle state
+  // checkTouchpad2();       // Check touchpad and toggle state
   // checkTouchpad3();     // Check touchpad and toggle state
+  // Ventilator_control();  // Control ventilator based on humidity
+  // updateServoStatenoProtection();    // Update servo position based on state
   // updateSystem();       // Update system for PID and Manual
   // statusUpdate();       // Check if food's ready
   // updatesevensegdisplay(); // update 7segment display
   // delay(300);            // Main loop delay
 }
 
-// Function to check touchpad and toggle state
-void checkTouchpad2() {
-  valtp2 = digitalRead(touchpad2);
-  if (valtp2 == 1) {
-    tone(buzz, 3000, 100);
-    stat2 = !stat2;
-    delay(100);
-  }
-}
 
 void moveServo(int targetPos) {
   int currentPos = myservo.read();
@@ -214,11 +196,6 @@ void moveServo(int targetPos) {
   }
 }
 
-// float calibratethreshold(float mean, float sd) {
-//   float threshold = mean + (kt * sd);
-//   return threshold;
-// }
-
 float readCurrent() {
   int adc = analogRead(A3);
   float voltage = adc * 5.0 / 1023.0;
@@ -231,21 +208,6 @@ void setColor(int red, int green, int blue) {
   analogWrite(GREEN_PIN, 255-green);
   analogWrite(BLUE_PIN, 255-blue);
 }
-// float calculateMean(float arr[], int size) {
-//   float sum = 0;
-//   for (int i = 0; i < size; i++) {
-//     sum += arr[i];
-//   }
-//   return sum / size;
-// }
-
-// float calculateSD(float arr[], int size, float mean) {
-//   float sumSquaredDiffs = 0;
-//   for (int i = 0; i < size; i++) {
-//     sumSquaredDiffs += pow(arr[i] - mean, 2);
-//   }
-//   return sqrt(sumSquaredDiffs / size);  // Population SD (use (size-1) for sample SD)
-// }
 
 // Function to update servo state based on stat
 void updateServoState() {
@@ -369,6 +331,15 @@ void checkTouchpad1() {
   }
 }
 
+void checkTouchpad2() {
+  valtp2 = digitalRead(touchpad2);
+  if (valtp2 == 1) {
+    tone(buzz, 3000, 100);
+    stat2 = !stat2;
+    delay(100);
+  }
+}
+
 void checkTouchpad3() {
   valtp3 = digitalRead(touchpad3);
   if (valtp3 == 1) {
@@ -397,11 +368,9 @@ void updateSystem() {
   if (stat1 == 1) {
     tempPID.SetMode(AUTOMATIC); // PID on
     updateTempPID();
-    return;
   } else {
     tempPID.SetMode(MANUAL); // PID off
     digitalWrite(H_RELAY_PIN, HIGH);
-    return;
   }
 }
 
@@ -415,16 +384,14 @@ void statusUpdate() {
 
 void updatesevensegdisplay() {
   float tempP = ds.getTempC();
-  
-  char buffer[5]; // Buffer to hold "25.0"
+  char buffer[5];
   dtostrf(tempP, 4, 1, buffer);  // Convert float to string with 1 decimal place
-  
   for (int i = 0; i < 4; i++) {
     alpha4.writeDigitAscii(i, buffer[i]);
   }
-  
   alpha4.writeDisplay(); // Update display
 }
+
 
 void Ventilator_control() {
   BMEread(temp, hum, pres);
@@ -443,17 +410,38 @@ void BMEread(float &temp, float &hum, float &pres) {
   bme.read(pres, temp, hum, tempUnit, presUnit);
 }
 
-void printBME280Data(float temp, float hum, float pres) {
-  BMEread(temp, hum, pres);
-  Serial.print("Temp: ");
-  Serial.print(temp);
-  Serial.print(" °C\t");
+// void printBME280Data(float temp, float hum, float pres) {
+//   BMEread(temp, hum, pres);
+//   Serial.print("Temp: ");
+//   Serial.print(temp);
+//   Serial.print(" °C\t");
 
-  Serial.print("Humidity: ");
-  Serial.print(hum);
-  Serial.print("% RH\t");
+//   Serial.print("Humidity: ");
+//   Serial.print(hum);
+//   Serial.print("% RH\t");
 
-  Serial.print("Pressure: ");
-  Serial.print(pres);
-  Serial.println(" Pa");
-}
+//   Serial.print("Pressure: ");
+//   Serial.print(pres);
+//   Serial.println(" Pa");
+// }
+
+// float calculateMean(float arr[], int size) {
+//   float sum = 0;
+//   for (int i = 0; i < size; i++) {
+//     sum += arr[i];
+//   }
+//   return sum / size;
+// }
+
+// float calculateSD(float arr[], int size, float mean) {
+//   float sumSquaredDiffs = 0;
+//   for (int i = 0; i < size; i++) {
+//     sumSquaredDiffs += pow(arr[i] - mean, 2);
+//   }
+//   return sqrt(sumSquaredDiffs / size);  // Population SD (use (size-1) for sample SD)
+// }
+
+// float calibratethreshold(float mean, float sd) {
+//   float threshold = mean + (kt * sd);
+//   return threshold;
+// }
