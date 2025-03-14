@@ -2,6 +2,7 @@
 #include <PID_v1.h>
 #include <Servo.h>
 #include "VEGA_MLX90614.h"
+#include <Adafruit_MLX90614.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <BME280I2C.h>
@@ -10,7 +11,7 @@
 #include <DS18B20.h>
 
 // Serial communication
-#define SERIAL_BAUD 115200
+//#define SERIAL_BAUD 115200
 
 // Relay and fan control
 #define F_RELAY_PIN 7   // Fan relay (digital pin 7)
@@ -36,7 +37,8 @@ int seropen = 135;
 int serclose = 15;
 
 // Temperature sensor (infrared)
-VEGA_MLX90614 mlx(18, 19);
+//VEGA_MLX90614 mlx(18, 19);
+Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 
 // Displays
 Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4(); 
@@ -93,7 +95,7 @@ void setup() {
 
   // Initialize PID input
   digitalWrite(H_RELAY_PIN, LOW);
-  Input = mlx.mlx90614ReadTargetTempC(); // Read target temperature from MLX90614
+  Input = mlx.readObjectTempC(); // Read target temperature from MLX90614
 
   // Activate PID control
   tempPID.SetMode(AUTOMATIC);
@@ -116,55 +118,54 @@ void setup() {
 
 void loop() {
   //check
-  Serial.print("oled touchpad1 state : "); Serial.println(stat1);
-  delay(2000);
-  Serial.print("lid touchpad2 state : "); Serial.println(stat2);
-  delay(2000);
-  Serial.print("light touchpad1 state : "); Serial.println(stat1);
-  delay(2000);
+  // Serial.print("oled touchpad1 state : "); Serial.println(stat1);
+  // Serial.print("lid touchpad2 state : "); Serial.println(stat2);
+  // Serial.print("light touchpad1 state : "); Serial.println(stat1);
+  // delay(2000);
 
-  Serial.print("lid degree : "); Serial.println(myservo.read());
-  delay(2000);
-  Serial.print("temp from probe : "); Serial.println(ds.getTempC());
-  delay(2000);
-  Serial.print("temp from IR : "); Serial.println(mlx.mlx90614ReadTargetTempC());
-  delay(2000);
-  Serial.print("humidity from bme : ");Serial.println(hum);
-  delay(2000);
-  Serial.print("Current from current sensor : "); Serial.println(readCurrent());
-  delay(2000);
+  // Serial.print("lid degree : "); Serial.println(myservo.read());
+  // Serial.print("temp from probe : "); Serial.println(ds.getTempC());
+  // Serial.print("temp from IR : "); Serial.println(mlx.mlx90614ReadTargetTempC());
+  // BMEread(temp, hum, pres);
+  // Serial.print("humidity from bme : ");Serial.println(hum);
+  // Serial.print("Current from current sensor : "); Serial.println(readCurrent());
+  // delay(2000);
 
-  Serial.println("relay fan on");
-  digitalWrite(F_RELAY_PIN, HIGH);
-  delay(5000);
-  Serial.println("relay fan off");
-  digitalWrite(F_RELAY_PIN, LOW);
-  delay(5000);
-  Serial.println("relay light on");
-  digitalWrite(LIGHT, HIGH);
-  delay(5000);
-  Serial.println("relay light off");
-  digitalWrite(LIGHT, LOW);
-  delay(5000);
-  Serial.println("relay heater on");
-  digitalWrite(H_RELAY_PIN, HIGH);
-  delay(5000);
-  Serial.println("relay heater off");
-  digitalWrite(H_RELAY_PIN, LOW);
-  delay(5000);
+  // Serial.println("relay fan on");
+  // digitalWrite(F_RELAY_PIN, HIGH);
+  // delay(5000);
+  // Serial.println("relay fan off");
+  // digitalWrite(F_RELAY_PIN, LOW);
+  // delay(5000);
+  // Serial.println("relay light on");
+  // digitalWrite(LIGHT, HIGH);
+  // delay(5000);
+  // Serial.println("relay light off");
+  // digitalWrite(LIGHT, LOW);
+  // delay(5000);
+  // Serial.println("relay heater on");
+  // digitalWrite(H_RELAY_PIN, HIGH);
+  // delay(5000);
+  // Serial.println("relay heater off");
+  // digitalWrite(H_RELAY_PIN, LOW);
+  // delay(5000);
 
-  Serial.println("Opening lid :");
-  moveServo(seropen);
-  delay(2000);
-  Serial.println("Closing lid :");
-  moveServo(serclose);
-  delay(2000);
-  Serial.println("7 SEG CHECK");
-  updatesevensegdisplay();
-  delay(2000);
-  Serial.println("buzzer");
-  tone(buzz, 3000, 5000);
-  delay(5000);
+  // Serial.println("Opening lid :");
+  // moveServo(seropen);
+  // delay(2000);
+  // Serial.println("Closing lid :");
+  // moveServo(serclose);
+  // delay(2000);
+  // Serial.println("7 SEG CHECK");
+  // updatesevensegdisplay();
+  // delay(2000);
+  // Serial.println("buzzer");
+  // tone(buzz, 3000, 5000);
+  // delay(5000);
+  Serial.print(".....");
+  // Serial.print("mlx.readObjectTempC()");Serial.println(mlx.readObjectTempC());
+  // Serial.print("mlx.readAmbientTempC()");Serial.println(mlx.readAmbientTempC());
+  delay(1000);
 
   // update system
   // main
@@ -250,7 +251,8 @@ void updateServoStatenoProtection() {
 
 // Function to handle temperature PID (placeholder)
 void updateTempPID() {
-  Input = mlx.mlx90614ReadTargetTempC();
+  // Input = mlx.readObjectTempC();
+  Input = ds.getTempC();
   tempPID.Compute();
   pwm(Output);
 }
