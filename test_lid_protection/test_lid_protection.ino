@@ -183,20 +183,10 @@ void updateServoStatenocurrent() {
   if (stat2 == 0) {
     Serial.println("Closing lid");
     moveServo(serclose);
-    // else if (myservo.read() != seropen) {
-    //   Serial.println("Opening lid due to obstacle...");
-    //   moveServo(seropen);
-    //   stat2 = !stat2;
-    // }
   } 
   else if (stat2 == 1) {
     Serial.println("Opening lid");
     moveServo(seropen);
-    // else if (myservo.read() != serclose) {
-    //   Serial.println("Closing lid due to obs");
-    //   moveServo(serclose);
-    //   stat2 = !stat2;
-    // }
   }
 }
 

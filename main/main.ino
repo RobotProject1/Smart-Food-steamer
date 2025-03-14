@@ -6,10 +6,12 @@
 #include <Adafruit_SSD1306.h>
 #include <BME280I2C.h>
 #include "Adafruit_LEDBackpack.h"
+#include <OneWire.h>
+#include <DS18B20.h>
 
 // humidity and fan
 #define SERIAL_BAUD 115200
-#define F_RELAY_PIN 2  // Relay connected to digital pin 7
+#define F_RELAY_PIN 7  // Relay connected to digital pin 7
 #define H_RELAY_PIN 13 // Heater Relay
 #define HUMIDITY_THRESHOLD 60.0  
 BME280I2C bme;  // Default : forced mode, standby time = 1000 ms
@@ -62,6 +64,8 @@ PID tempPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 float temp;
 float hum;
 float pres;
+
+DS18B20 ds(4);
 
 float threshold = 1.2; // ไว้มาแก้
 
@@ -116,7 +120,7 @@ void setup() {
 
   // 7seg setup
   alpha4.begin(0x70); 
-  updatesevensegdisplay(25.5); // update 7segment display
+  digitalWrite(F_RELAY_PIN, LOW);
 }
 
 void loop() {
@@ -126,27 +130,24 @@ void loop() {
   Ventilator_control();  // Control ventilator based on humidity
 
   checkTouchpad2();       // Check touchpad and toggle state
-  updateServoState();    // Update servo position based on state
+  updateServoStatenoProtection();    // Update servo position based on state
   checkTouchpad1();     // Check touchpad and toggle state
   checkTouchpad3();     // Check touchpad and toggle state
   updateSystem();       // Update system for PID and Manual
   statusUpdate();       // Check if food's ready
-  updatesevensegdisplay(25.5); // update 7segment display
+  updatesevensegdisplay(); // update 7segment display
   delay(300);            // Main loop delay
-  //   // สีแดง
-  // setColor(255, 0, 0);
-  // Serial.println("red");
-  // delay(1000);
 
-  // // สีเขียว
-  // setColor(0, 255, 0);
-  // Serial.println("green");
-  // delay(1000);
+  Serial.print("oled touchpad1 state : "); Serial.println(stat1);
+  Serial.print("lid touchpad2 state : "); Serial.println(stat2);
+  Serial.print("light touchpad1 state : "); Serial.println(stat1);
 
-  // // สีน้ำเงิน
-  // setColor(0, 0, 255);
-  // Serial.println("Blue");
-  // delay(1000);
+  Serial.print("lid degree : "); Serial.println(myservo.read());
+  Serial.print("temp from probe : "); Serial.println(ds.getTempC());
+  Serial.print("temp from IR : "); Serial.println(mlx.mlx90614ReadTargetTempC());
+  Serial.print("humidity from bme : ");Serial.println(hum);
+  Serial.print("Current from current sensor : "); Serial.println(readCurrent());
+  
 }
 
 // Function to check touchpad and toggle state
@@ -234,11 +235,37 @@ void updateServoState() {
   }
 }
 
+void updateServoStatenoProtection() {
+  float cur = readCurrent();  // Read the current value
+
+  if (stat2 == 0) {
+    //Serial.println("Closing lid");
+    moveServo(serclose);
+  } 
+  else if (stat2 == 1) {
+    //Serial.println("Opening lid");
+    moveServo(seropen);
+  }
+}
+
 // Function to handle temperature PID (placeholder)
 void updateTempPID() {
   Input = mlx.mlx90614ReadTargetTempC();
   tempPID.Compute();
-  // Add logic here to use Output (e.g., control a heater or fan)
+  pwm(Output);
+}
+
+void pwm(int sig) {
+  sig = constrain(sig, 0, 255);  // Ensure PWM value is within range
+
+  int onTime = map(sig, 0, 255, 0, 10);  // Convert 0-255 to 0-10 ms
+  int offTime = 10 - onTime;  // Complementary OFF time
+
+  digitalWrite(H_RELAY_PIN, HIGH);
+  delay(onTime);  // Keep SSR ON for 'onTime'
+
+  digitalWrite(H_RELAY_PIN, LOW);
+  delay(offTime);  // Keep SSR OFF for 'offTime'
 }
 
 void drawMode() {
@@ -332,9 +359,11 @@ void updateSystem() {
   if (stat1 == 1) {
     tempPID.SetMode(AUTOMATIC); // PID on
     updateTempPID();
+    return;
   } else {
     tempPID.SetMode(MANUAL); // PID off
     digitalWrite(H_RELAY_PIN, HIGH);
+    return;
   }
 }
 
@@ -346,21 +375,26 @@ void statusUpdate() {
   }
 }
 
-void updatesevensegdisplay(float num) {
+void updatesevensegdisplay() {
+  float tempP = ds.getTempC();
+  
   char buffer[5]; // Buffer to hold "25.0"
-  dtostrf(num, 4, 1, buffer);  // Convert float to string with 1 decimal place
+  dtostrf(tempP, 4, 1, buffer);  // Convert float to string with 1 decimal place
+  
   for (int i = 0; i < 4; i++) {
     alpha4.writeDigitAscii(i, buffer[i]);
-  } 
+  }
+  
+  alpha4.writeDisplay(); // Update display
 }
 
 void Ventilator_control() {
   BMEread(temp, hum, pres);
   if (hum > HUMIDITY_THRESHOLD) {
-    digitalWrite(F_RELAY_PIN, LOW);  // Turn ON ventilator
+    digitalWrite(F_RELAY_PIN, HIGH);  // Turn ON ventilator
     // Serial.println("Ventilator ON");
   } else {
-    digitalWrite(F_RELAY_PIN, HIGH);  // Turn OFF ventilator
+    digitalWrite(F_RELAY_PIN, LOW);  // Turn OFF ventilator
     // Serial.println("Ventilator OFF");
   }
 }
