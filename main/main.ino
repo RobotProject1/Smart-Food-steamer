@@ -311,9 +311,7 @@ void checkTouchpad3() {
     stat3 = !stat3;
     statL = !statL;
     drawMode();
-    if (statL == 1) {
-      digitalWrite(LIGHT, HIGH);
-    }
+    digitalWrite(LIGHT, statL == 1 ? HIGH : LOW);
     delay(100);
   }
 }
