@@ -35,7 +35,7 @@ int statL = 0;
 // Servo setup
 Servo myservo;
 int seropen = 135;
-int serclose = 10;
+int serclose = 8;
 
 // Temperature sensor (infrared)
 //VEGA_MLX90614 mlx(18, 19);
@@ -128,63 +128,63 @@ void setup() {
 
 void loop() {
   //check
-  Serial.print("oled touchpad1 state : "); Serial.println(stat1);
-  Serial.print("lid touchpad2 state : "); Serial.println(stat2);
-  Serial.print("light touchpad1 state : "); Serial.println(stat1);
+  // Serial.print("oled touchpad1 state : "); Serial.println(stat1);
+  // Serial.print("lid touchpad2 state : "); Serial.println(stat2);
+  // Serial.print("light touchpad1 state : "); Serial.println(stat1);
   //delay(2000);
 
-  Serial.print("lid degree : "); Serial.println(myservo.read());
-  Serial.print("temp from probe : "); Serial.println(ds.getTempC());
-  Serial.print("object temp from IR : "); Serial.println(mlx.readObjectTempC());
-  Serial.print("ambient temp from IR : "); Serial.println(mlx.readAmbientTempC());
-  BMEread(temp, hum, pres);
-  Serial.print("humidity from bme : ");Serial.println(hum);
-  Serial.print("Current from current sensor : "); Serial.println(readCurrent());
+  // Serial.print("lid degree : "); Serial.println(myservo.read());
+  // Serial.print("temp from probe : "); Serial.println(ds.getTempC());
+  // Serial.print("object temp from IR : "); Serial.println(mlx.readObjectTempC());
+  // Serial.print("ambient temp from IR : "); Serial.println(mlx.readAmbientTempC());
+  // BMEread(temp, hum, pres);
+  // Serial.print("humidity from bme : ");Serial.println(hum);
+  // Serial.print("Current from current sensor : "); Serial.println(readCurrent());
   //delay(2000);
 
-  Serial.println("relay fan on");
-  digitalWrite(F_RELAY_PIN, HIGH);
+  // Serial.println("relay fan on");
+  // digitalWrite(F_RELAY_PIN, HIGH);
   //delay(5000);
   // Serial.println("relay fan off");
   // digitalWrite(F_RELAY_PIN, LOW);
   // delay(5000);
-  Serial.println("relay light on");
-  digitalWrite(LIGHT, HIGH);
+  // Serial.println("relay light on");
+  // digitalWrite(LIGHT, HIGH);
   //delay(5000);
   // Serial.println("relay light off");
   // digitalWrite(LIGHT, LOW);
   // delay(5000);
-  Serial.println("relay heater on");
-  digitalWrite(H_RELAY_PIN, HIGH);
+  // Serial.println("relay heater on");
+  // digitalWrite(H_RELAY_PIN, HIGH);
   //delay(5000);
   // Serial.println("relay heater off");
   // digitalWrite(H_RELAY_PIN, LOW);
   // delay(5000);
 
-  Serial.println("Opening lid :");
-  moveServo(seropen);
-  delay(500);
-  Serial.println("Closing lid :");
-  moveServo(serclose);
-  delay(500);  
-  Serial.println("7 SEG CHECK");
-  updatesevensegdisplay();
-  // delay(2000);
-  Serial.println("buzzer");
-  tone(buzz, 3000, 5000);
+  // Serial.println("Opening lid :");
+  // moveServo(seropen);
+  // delay(500);
+  // Serial.println("Closing lid :");
+  // moveServo(serclose);
+  // delay(500);  
+  // Serial.println("7 SEG CHECK");
+  // updatesevensegdisplay();
+  // // delay(2000);
+  // Serial.println("buzzer");
+  // tone(buzz, 3000, 5000);
   //delay(5000);
 
   // update system
   // main
-  // checkTouchpad1();     // Check touchpad and toggle state
-  // checkTouchpad2();       // Check touchpad and toggle state
-  // checkTouchpad3();     // Check touchpad and toggle state
-  // idleOLED();
-  // Ventilator_control();  // Control ventilator based on humidity
-  // updateServoStatenoProtection();    // Update servo position based on state
-  // updateSystem();       // Update system for PID and Manual
-  // statusUpdate();       // Check if food's ready
-  // updatesevensegdisplay(); // update 7segment display
+  checkTouchpad1();     // Check touchpad and toggle state
+  checkTouchpad2();       // Check touchpad and toggle state
+  checkTouchpad3();     // Check touchpad and toggle state
+  idleOLED();
+  Ventilator_control();  // Control ventilator based on humidity
+  updateServoStatenoProtection();    // Update servo position based on state
+  updateSystem();       // Update system for PID and Manual
+  statusUpdate();       // Check if food's ready
+  updatesevensegdisplay(); // update 7segment display
   // delay(300);            // Main loop delay
 }
 
