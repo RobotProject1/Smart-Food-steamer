@@ -41,7 +41,6 @@ int serclose = 15;
 //VEGA_MLX90614 mlx(18, 19);
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 
-
 // Displays
 Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4(); 
 Adafruit_SSD1306 display(4);
@@ -228,7 +227,7 @@ void updateServoState() {
       Serial.println("Closing lid due to obstacle...");
       moveServo(serclose);
       stat2 = 0;
-    } 
+    }
     else if (myservo.read() != seropen) {
       moveServo(seropen);
     }
@@ -279,11 +278,16 @@ void pwm(int sig) {
 }
 
 void idleOLED() {
-  if (millis() - lastPressTime > 5000) {
+  if (millis() - lastPressTime > 2000) {
     display.clearDisplay();
-    display.setCursor(20, 0);
-    display.setTextSize(4);
-    display.print("IDLE");
+    display.setCursor(10, 3);
+    display.setTextSize(3);
+    display.print(mlx.readObjectTempC(), 1);
+    display.print(" C");
+    display.fillRect(88, 3, 5, 2, SSD1306_WHITE);
+    display.fillRect(85, 5, 3, 3, SSD1306_WHITE);
+    display.fillRect(93, 5, 3, 3, SSD1306_WHITE);
+    display.fillRect(88, 8, 5, 2, SSD1306_WHITE);
     display.display();
     isIdle = true;
   }
