@@ -57,6 +57,10 @@ int valtp1 = 0, stat1 = 0;
 int valtp2 = 0, stat2 = 0;
 int valtp3 = 0, stat3 = 0;
 
+// OLED
+bool isIdle = false;
+long lastPressTime = 0;
+
 // Sensor sampling
 const int SAMPLES = 10;
 float s_val[SAMPLES];
@@ -176,6 +180,7 @@ void loop() {
   // checkTouchpad1();     // Check touchpad and toggle state
   // checkTouchpad2();       // Check touchpad and toggle state
   // checkTouchpad3();     // Check touchpad and toggle state
+  // idleOLED();
   // Ventilator_control();  // Control ventilator based on humidity
   // updateServoStatenoProtection();    // Update servo position based on state
   // updateSystem();       // Update system for PID and Manual
@@ -273,9 +278,31 @@ void pwm(int sig) {
   delay(offTime);  // Keep SSR OFF for 'offTime'
 }
 
+void idleOLED() {
+  if (millis() - lastPressTime > 5000) {
+    display.clearDisplay();
+    display.setCursor(20, 0);
+    display.setTextSize(4);
+    display.print("IDLE");
+    display.display();
+    isIdle = true;
+  }
+}
+
+void wakeUpOLED() {
+  if (isIdle) {
+    display.clearDisplay();  // Clear screen ONCE
+    drawMode();              // Redraw mode section
+    drawLightBulb();         // Redraw light bulb section
+    display.display();       // Ensure buffer update
+    isIdle = false;          // Reset idle status
+  }
+}
+
 void drawMode() {
   display.fillRect(0, 0, 80, 40, SSD1306_BLACK);
   display.setCursor(5, 0);
+  display.setTextSize(2);
   display.print("Mode:");
   display.setCursor(5, 17);
   display.print(stat1 == 0 ? "MANUAL" : "AUTO");
@@ -283,6 +310,7 @@ void drawMode() {
 }
 
 void drawLightBulb() {
+  display.setTextSize(2); 
   display.fillRect(75, 0, 55, 80, SSD1306_BLACK);
 
   display.fillRect(99, 24, 12, 7, SSD1306_WHITE);
@@ -329,9 +357,12 @@ void drawLightBulb() {
 void checkTouchpad1() {
   valtp1 = digitalRead(touchpad1);
   if (valtp1 == 1) {
+    wakeUpOLED();
     tone(buzz, 3000, 100);
     stat1 = !stat1;
     drawMode();
+    display.display();
+    lastPressTime = millis();
     delay(100);
   }
 }
@@ -348,10 +379,13 @@ void checkTouchpad2() {
 void checkTouchpad3() {
   valtp3 = digitalRead(touchpad3);
   if (valtp3 == 1) {
+    wakeUpOLED();
     tone(buzz, 3000, 100);
     stat3 = !stat3;
     statL = !statL;
-    drawMode();
+    drawLightBulb();
+    display.display();
+    lastPressTime = millis();
     digitalWrite(LIGHT, statL == 1 ? HIGH : LOW);
     delay(100);
   }
