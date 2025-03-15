@@ -75,9 +75,10 @@ void setup() {
 }
 
 void loop() {
-  checkTouchpad2();       // Check touchpad and toggle state
-  updateServoState();    // Update servo position based on state
+  // checkTouchpad2();       // Check touchpad and toggle state
+  // updateServoState();    // Update servo position based on state
   //Serial.println(stat2);
+  moveServo(seropen);
 }
 
 // // Function to check touchpad and toggle state
