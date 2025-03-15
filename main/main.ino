@@ -287,7 +287,7 @@ void idleOLED() {
     display.fillRect(88, 3, 5, 2, SSD1306_WHITE);
     display.fillRect(85, 5, 3, 3, SSD1306_WHITE);
     display.fillRect(93, 5, 3, 3, SSD1306_WHITE);
-    display.fillRect(88, 8, 5, 2, SSD1306_WHITE);
+    display.fillRect(88, 8, 5, 2, SSD1306_WHITE); // degree symbol (°)
     display.display();
     isIdle = true;
   }
