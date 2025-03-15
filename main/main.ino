@@ -15,7 +15,8 @@
 
 // Relay and fan control
 #define F_RELAY_PIN 7   // Fan relay (digital pin 7)
-#define H_RELAY_PIN 13  // Heater relay
+//#define H_RELAY_PIN 11  // Heater relay
+int H_RELAY_PIN = 11;
 #define HUMIDITY_THRESHOLD 60.0  
 
 // BME280 sensor (temperature, pressure, humidity)
@@ -25,7 +26,7 @@ BME280I2C bme; // Default settings: forced mode, standby time = 1000 ms
 // RGB LED pins
 #define RED_PIN 9
 #define GREEN_PIN 10
-#define BLUE_PIN 11
+// #define BLUE_PIN 
 
 // Light control
 #define LIGHT 12
@@ -46,10 +47,10 @@ Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4();
 Adafruit_SSD1306 display(4);
 
 // Touchpad and buzzer
-const int touchpad1 = 0;
-const int touchpad2 = 1;
-const int touchpad3 = 2;
-const int buzz = 3;
+const int touchpad1 = 5;
+const int touchpad2 = 2;
+const int touchpad3 = 3;
+const int buzz = 1;
 
 // Touchpad state variables
 int valtp1 = 0, stat1 = 0;
@@ -75,7 +76,7 @@ PID tempPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 float temp, hum, pres;
 
 // DS18B20 temperature sensor
-DS18B20 ds(4);
+DS18B20 ds(8);
 
 // Threshold value (to be adjusted)
 float threshold = 1.2; // ไว้มาแก้
@@ -95,6 +96,7 @@ void setup() {
   pinMode(buzz, OUTPUT);
 
   // Initialize PID input
+  pinMode(H_RELAY_PIN, OUTPUT);
   digitalWrite(H_RELAY_PIN, LOW);
 
   mlx.begin();
@@ -110,6 +112,7 @@ void setup() {
   bme.begin();
 
   // LED in box
+  pinMode(LIGHT, OUTPUT);
   digitalWrite(LIGHT, LOW);
 
   // OLED display setup
@@ -129,8 +132,8 @@ void loop() {
 
   // Serial.print("lid degree : "); Serial.println(myservo.read());
   // Serial.print("temp from probe : "); Serial.println(ds.getTempC());
-  // Serial.print("object temp from IR : "); Serial.println((mlx.readObjectTempC());
-  // Serial.print("ambient temp from IR : "); Serial.println((mlx.readAmbientTempC());
+  // Serial.print("object temp from IR : "); Serial.println(mlx.readObjectTempC());
+  // Serial.print("ambient temp from IR : "); Serial.println(mlx.readAmbientTempC());
   // BMEread(temp, hum, pres);
   // Serial.print("humidity from bme : ");Serial.println(hum);
   // Serial.print("Current from current sensor : "); Serial.println(readCurrent());
@@ -148,12 +151,12 @@ void loop() {
   // Serial.println("relay light off");
   // digitalWrite(LIGHT, LOW);
   // delay(5000);
-  // Serial.println("relay heater on");
-  // digitalWrite(H_RELAY_PIN, HIGH);
-  // delay(5000);
-  // Serial.println("relay heater off");
-  // digitalWrite(H_RELAY_PIN, LOW);
-  // delay(5000);
+  Serial.println("relay heater on");
+  digitalWrite(H_RELAY_PIN, HIGH);
+  delay(5000);
+  Serial.println("relay heater off");
+  digitalWrite(H_RELAY_PIN, LOW);
+  delay(5000);
 
   // Serial.println("Opening lid :");
   // moveServo(seropen);
@@ -208,7 +211,7 @@ float readCurrent() {
 void setColor(int red, int green, int blue) {
   analogWrite(RED_PIN, 255-red);   // Invert สีสำหรับ Common Anode
   analogWrite(GREEN_PIN, 255-green);
-  analogWrite(BLUE_PIN, 255-blue);
+  //analogWrite(BLUE_PIN, 255-blue);
 }
 
 // Function to update servo state based on stat
