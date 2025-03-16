@@ -128,52 +128,6 @@ void setup() {
 
 void loop() {
   //check
-  // Serial.print("oled touchpad1 state : "); Serial.println(stat1);
-  // Serial.print("lid touchpad2 state : "); Serial.println(stat2);
-  // Serial.print("light touchpad1 state : "); Serial.println(stat1);
-  //delay(2000);
-
-  // Serial.print("lid degree : "); Serial.println(myservo.read());
-  // Serial.print("temp from probe : "); Serial.println(ds.getTempC());
-  // Serial.print("object temp from IR : "); Serial.println(mlx.readObjectTempC());
-  // Serial.print("ambient temp from IR : "); Serial.println(mlx.readAmbientTempC());
-  // BMEread(temp, hum, pres);
-  // Serial.print("humidity from bme : ");Serial.println(hum);
-  // Serial.print("Current from current sensor : "); Serial.println(readCurrent());
-  //delay(2000);
-
-  // Serial.println("relay fan on");
-  // digitalWrite(F_RELAY_PIN, HIGH);
-  //delay(5000);
-  // Serial.println("relay fan off");
-  // digitalWrite(F_RELAY_PIN, LOW);
-  // delay(5000);
-  // Serial.println("relay light on");
-  // digitalWrite(LIGHT, HIGH);
-  //delay(5000);
-  // Serial.println("relay light off");
-  // digitalWrite(LIGHT, LOW);
-  // delay(5000);
-  // Serial.println("relay heater on");
-  // digitalWrite(H_RELAY_PIN, HIGH);
-  //delay(5000);
-  // Serial.println("relay heater off");
-  // digitalWrite(H_RELAY_PIN, LOW);
-  // delay(5000);
-
-  // Serial.println("Opening lid :");
-  // moveServo(seropen);
-  // delay(500);
-  // Serial.println("Closing lid :");
-  // moveServo(serclose);
-  // delay(500);  
-  // Serial.println("7 SEG CHECK");
-  // updatesevensegdisplay();
-  // // delay(2000);
-  // Serial.println("buzzer");
-  // tone(buzz, 3000, 5000);
-  //delay(5000);
-
   // update system
   // main
   checkTouchpad1();     // Check touchpad and toggle state
@@ -188,6 +142,65 @@ void loop() {
   // delay(300);            // Main loop delay
 }
 
+void printdata() {
+  // IRobjecttemp,IRambienttemp,Probetemp,BMEtemp,BMEhumidity,BMEpressure,ServoAngle,CurrentA
+  Serial.print(mlx.readObjectTempC());Serial.print(",");
+  Serial.print(mlx.readAmbientTempC());Serial.print(",");
+  Serial.print(ds.getTempC());Serial.print(",");
+  Serial.print(temp);Serial.print(",");
+  Serial.print(hum);Serial.print(",");
+  Serial.print(pres);Serial.print(",");
+  Serial.print(myservo.read());Serial.print(",");
+  Serial.println(readCurrent());
+}
+
+void check() {
+  Serial.print("oled touchpad1 state : "); Serial.println(stat1);
+  Serial.print("lid touchpad2 state : "); Serial.println(stat2);
+  Serial.print("light touchpad1 state : "); Serial.println(stat1);
+  delay(2000);
+
+  Serial.print("lid degree : "); Serial.println(myservo.read());
+  Serial.print("temp from probe : "); Serial.println(ds.getTempC());
+  Serial.print("object temp from IR : "); Serial.println(mlx.readObjectTempC());
+  Serial.print("ambient temp from IR : "); Serial.println(mlx.readAmbientTempC());
+  BMEread(temp, hum, pres);
+  Serial.print("humidity from bme : ");Serial.println(hum);
+  Serial.print("Current from current sensor : "); Serial.println(readCurrent());
+  delay(2000);
+
+  Serial.println("relay fan on");
+  digitalWrite(F_RELAY_PIN, HIGH);
+  delay(5000);
+  Serial.println("relay fan off");
+  digitalWrite(F_RELAY_PIN, LOW);
+  delay(5000);
+  Serial.println("relay light on");
+  digitalWrite(LIGHT, HIGH);
+  delay(5000);
+  Serial.println("relay light off");
+  digitalWrite(LIGHT, LOW);
+  delay(5000);
+  Serial.println("relay heater on");
+  digitalWrite(H_RELAY_PIN, HIGH);
+  delay(5000);
+  Serial.println("relay heater off");
+  digitalWrite(H_RELAY_PIN, LOW);
+  delay(5000);
+
+  Serial.println("Opening lid :");
+  moveServo(seropen);
+  delay(500);
+  Serial.println("Closing lid :");
+  moveServo(serclose);
+  delay(500);  
+  Serial.println("7 SEG CHECK");
+  updatesevensegdisplay();
+  // delay(2000);
+  Serial.println("buzzer");
+  tone(buzz, 3000, 5000);
+  delay(5000);
+}
 
 void moveServo(int targetPos) {
   int currentPos = myservo.read();
