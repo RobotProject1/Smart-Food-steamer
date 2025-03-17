@@ -218,12 +218,12 @@ void moveServo(int targetPos) {
   }
 }
 
-float readCurrent() {
-  int adc = analogRead(A3);
-  float voltage = adc * 5.0 / 1023.0;
-  float current = (voltage - 2.5) / 0.185;
-  return current;
-}
+// float readCurrent() {
+//   int adc = analogRead(A3);
+//   float voltage = adc * 5.0 / 1023.0;
+//   float current = (voltage - 2.5) / 0.185;
+//   return current;
+// }
 
 void setColor(int red, int green, int blue) {
   analogWrite(RED_PIN, 255-red);   // Invert สีสำหรับ Common Anode
@@ -258,7 +258,7 @@ void updateServoState() {
 }
 
 void updateServoStatenoProtection() {
-  float cur = readCurrent();  // Read the current value
+  //float cur = readCurrent();  // Read the current value
 
   if (stat2 == 0) {
     //Serial.println("Closing lid");
