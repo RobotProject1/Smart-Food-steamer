@@ -17,7 +17,7 @@
 #define F_RELAY_PIN 7   // Fan relay (digital pin 7)
 //#define H_RELAY_PIN 11  // Heater relay
 int H_RELAY_PIN = 13;
-#define HUMIDITY_THRESHOLD 60.0  
+#define HUMIDITY_THRESHOLD 90.0  
 
 // BME280 sensor (temperature, pressure, humidity)
 BME280I2C bme; // Default settings: forced mode, standby time = 1000 ms
@@ -35,7 +35,7 @@ int statL = 0;
 // Servo setup
 Servo myservo;
 int seropen = 135;
-int serclose = 8;
+int serclose = 7;
 
 // Temperature sensor (infrared)
 //VEGA_MLX90614 mlx(18, 19);
@@ -137,8 +137,9 @@ void loop() {
   Ventilator_control();  // Control ventilator based on humidity
   updateServoStatenoProtection();    // Update servo position based on state
   updateSystem();       // Update system for PID and Manual
-  statusUpdate();       // Check if food's ready
+  // statusUpdate();       // Check if food's ready
   updatesevensegdisplay(); // update 7segment display
+  printdata();
   // delay(300);            // Main loop delay
 }
 
@@ -150,57 +151,57 @@ void printdata() {
   Serial.print(temp);Serial.print(",");
   Serial.print(hum);Serial.print(",");
   Serial.print(pres);Serial.print(",");
-  Serial.print(myservo.read());Serial.print(",");
-  Serial.println(readCurrent());
+  Serial.println(myservo.read());//Serial.print(",");
+  //Serial.println(readCurrent());
 }
 
-void check() {
-  Serial.print("oled touchpad1 state : "); Serial.println(stat1);
-  Serial.print("lid touchpad2 state : "); Serial.println(stat2);
-  Serial.print("light touchpad1 state : "); Serial.println(stat1);
-  delay(2000);
+// void check() {
+//   Serial.print("oled touchpad1 state : "); Serial.println(stat1);
+//   Serial.print("lid touchpad2 state : "); Serial.println(stat2);
+//   Serial.print("light touchpad1 state : "); Serial.println(stat1);
+//   delay(2000);
 
-  Serial.print("lid degree : "); Serial.println(myservo.read());
-  Serial.print("temp from probe : "); Serial.println(ds.getTempC());
-  Serial.print("object temp from IR : "); Serial.println(mlx.readObjectTempC());
-  Serial.print("ambient temp from IR : "); Serial.println(mlx.readAmbientTempC());
-  BMEread(temp, hum, pres);
-  Serial.print("humidity from bme : ");Serial.println(hum);
-  Serial.print("Current from current sensor : "); Serial.println(readCurrent());
-  delay(2000);
+//   Serial.print("lid degree : "); Serial.println(myservo.read());
+//   Serial.print("temp from probe : "); Serial.println(ds.getTempC());
+//   Serial.print("object temp from IR : "); Serial.println(mlx.readObjectTempC());
+//   Serial.print("ambient temp from IR : "); Serial.println(mlx.readAmbientTempC());
+//   BMEread(temp, hum, pres);
+//   Serial.print("humidity from bme : ");Serial.println(hum);
+//   //Serial.print("Current from current sensor : "); Serial.println(readCurrent());
+//   delay(2000);
 
-  Serial.println("relay fan on");
-  digitalWrite(F_RELAY_PIN, HIGH);
-  delay(5000);
-  Serial.println("relay fan off");
-  digitalWrite(F_RELAY_PIN, LOW);
-  delay(5000);
-  Serial.println("relay light on");
-  digitalWrite(LIGHT, HIGH);
-  delay(5000);
-  Serial.println("relay light off");
-  digitalWrite(LIGHT, LOW);
-  delay(5000);
-  Serial.println("relay heater on");
-  digitalWrite(H_RELAY_PIN, HIGH);
-  delay(5000);
-  Serial.println("relay heater off");
-  digitalWrite(H_RELAY_PIN, LOW);
-  delay(5000);
+//   Serial.println("relay fan on");
+//   digitalWrite(F_RELAY_PIN, HIGH);
+//   delay(5000);
+//   Serial.println("relay fan off");
+//   digitalWrite(F_RELAY_PIN, LOW);
+//   delay(5000);
+//   Serial.println("relay light on");
+//   digitalWrite(LIGHT, HIGH);
+//   delay(5000);
+//   Serial.println("relay light off");
+//   digitalWrite(LIGHT, LOW);
+//   delay(5000);
+//   Serial.println("relay heater on");
+//   digitalWrite(H_RELAY_PIN, HIGH);
+//   delay(5000);
+//   Serial.println("relay heater off");
+//   digitalWrite(H_RELAY_PIN, LOW);
+//   delay(5000);
 
-  Serial.println("Opening lid :");
-  moveServo(seropen);
-  delay(500);
-  Serial.println("Closing lid :");
-  moveServo(serclose);
-  delay(500);  
-  Serial.println("7 SEG CHECK");
-  updatesevensegdisplay();
-  // delay(2000);
-  Serial.println("buzzer");
-  tone(buzz, 3000, 5000);
-  delay(5000);
-}
+//   Serial.println("Opening lid :");
+//   moveServo(seropen);
+//   delay(500);
+//   Serial.println("Closing lid :");
+//   moveServo(serclose);
+//   delay(500);  
+//   Serial.println("7 SEG CHECK");
+//   updatesevensegdisplay();
+//   // delay(2000);
+//   Serial.println("buzzer");
+//   tone(buzz, 3000, 5000);
+//   delay(5000);
+// }
 
 void moveServo(int targetPos) {
   int currentPos = myservo.read();
@@ -232,30 +233,30 @@ void setColor(int red, int green, int blue) {
 }
 
 // Function to update servo state based on stat
-void updateServoState() {
-  float cur = readCurrent();  // Read the current value
+// void updateServoState() {
+//   float cur = readCurrent();  // Read the current value
 
-  if (stat2 == 1) { // Lid is open
-    if (cur < threshold && myservo.read() != seropen) {
-      Serial.println("Closing lid due to obstacle...");
-      moveServo(serclose);
-      stat2 = 0;
-    }
-    else if (myservo.read() != seropen) {
-      moveServo(seropen);
-    }
-  } 
-  else { // Lid is closed
-    if (cur < threshold && myservo.read() != serclose) {
-      Serial.println("Opening lid due to obstacle...");
-      moveServo(seropen);
-      stat2 = 1;
-    } 
-    else if (myservo.read() != serclose) {
-      moveServo(serclose);
-    }
-  }
-}
+//   if (stat2 == 1) { // Lid is open
+//     if (cur < threshold && myservo.read() != seropen) {
+//       Serial.println("Closing lid due to obstacle...");
+//       moveServo(serclose);
+//       stat2 = 0;
+//     }
+//     else if (myservo.read() != seropen) {
+//       moveServo(seropen);
+//     }
+//   } 
+//   else { // Lid is closed
+//     if (cur < threshold && myservo.read() != serclose) {
+//       Serial.println("Opening lid due to obstacle...");
+//       moveServo(seropen);
+//       stat2 = 1;
+//     } 
+//     else if (myservo.read() != serclose) {
+//       moveServo(serclose);
+//     }
+//   }
+// }
 
 void updateServoStatenoProtection() {
   //float cur = readCurrent();  // Read the current value
@@ -273,7 +274,7 @@ void updateServoStatenoProtection() {
 // Function to handle temperature PID (placeholder)
 void updateTempPID() {
   Input = mlx.readObjectTempC();
-  if (Setpoint-Input>=6) {
+  if (Setpoint-Input>=8) {
     pwm(255);
     return;
   }
@@ -326,7 +327,7 @@ void drawMode() {
   display.setTextSize(2);
   display.print("Mode:");
   display.setCursor(5, 17);
-  display.print(stat1 == 0 ? "MANUAL" : "AUTO");
+  display.print(stat1 == 0 ? "ON" : "AUTO");
   display.display();
 }
 
@@ -443,7 +444,7 @@ void statusUpdate() {
 }
 
 void updatesevensegdisplay() {
-  float tempP = ds.getTempC();
+  float tempP = mlx.readObjectTempC();
   char buffer[5];
   dtostrf(tempP, 4, 1, buffer);  // Convert float to string with 1 decimal place
   for (int i = 0; i < 4; i++) {
