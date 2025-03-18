@@ -17,7 +17,7 @@
 #define F_RELAY_PIN 7   // Fan relay (digital pin 7)
 //#define H_RELAY_PIN 11  // Heater relay
 int H_RELAY_PIN = 13;
-#define HUMIDITY_THRESHOLD 90.0  
+#define HUMIDITY_THRESHOLD 95.0  
 
 // BME280 sensor (temperature, pressure, humidity)
 BME280I2C bme; // Default settings: forced mode, standby time = 1000 ms
@@ -139,21 +139,21 @@ void loop() {
   updateSystem();       // Update system for PID and Manual
   // statusUpdate();       // Check if food's ready
   updatesevensegdisplay(); // update 7segment display
-  printdata();
+  //printdata();
   // delay(300);            // Main loop delay
 }
 
-void printdata() {
-  // IRobjecttemp,IRambienttemp,Probetemp,BMEtemp,BMEhumidity,BMEpressure,ServoAngle,CurrentA
-  Serial.print(mlx.readObjectTempC());Serial.print(",");
-  Serial.print(mlx.readAmbientTempC());Serial.print(",");
-  Serial.print(ds.getTempC());Serial.print(",");
-  Serial.print(temp);Serial.print(",");
-  Serial.print(hum);Serial.print(",");
-  Serial.print(pres);Serial.print(",");
-  Serial.println(myservo.read());//Serial.print(",");
-  //Serial.println(readCurrent());
-}
+// void printdata() {
+//   // IRobjecttemp,IRambienttemp,Probetemp,BMEtemp,BMEhumidity,BMEpressure,ServoAngle,CurrentA
+//   Serial.print(mlx.readObjectTempC());Serial.print(",");
+//   Serial.print(mlx.readAmbientTempC());Serial.print(",");
+//   Serial.print(ds.getTempC());Serial.print(",");
+//   Serial.print(temp);Serial.print(",");
+//   Serial.print(hum);Serial.print(",");
+//   Serial.print(pres);Serial.print(",");
+//   Serial.println(myservo.read());//Serial.print(",");
+//   //Serial.println(readCurrent());
+// }
 
 // void check() {
 //   Serial.print("oled touchpad1 state : "); Serial.println(stat1);
