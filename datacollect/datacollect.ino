@@ -14,19 +14,19 @@
 //#define SERIAL_BAUD 115200
 
 // Relay and fan control
-#define F_RELAY_PIN 7  // Fan relay (digital pin 7)
+#define F_RELAY_PIN 7   // Fan relay (digital pin 7)
 //#define H_RELAY_PIN 11  // Heater relay
 int H_RELAY_PIN = 13;
-#define HUMIDITY_THRESHOLD 95.0
+#define HUMIDITY_THRESHOLD 90.0  
 
 // BME280 sensor (temperature, pressure, humidity)
-BME280I2C bme;  // Default settings: forced mode, standby time = 1000 ms
-                // Oversampling: pressure ×1, temperature ×1, humidity ×1, filter off
+BME280I2C bme; // Default settings: forced mode, standby time = 1000 ms
+               // Oversampling: pressure ×1, temperature ×1, humidity ×1, filter off
 
 // RGB LED pins
 #define RED_PIN 9
 #define GREEN_PIN 10
-// #define BLUE_PIN
+// #define BLUE_PIN 
 
 // Light control
 #define LIGHT 12
@@ -42,7 +42,7 @@ int serclose = 7;
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 
 // Displays
-Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4();
+Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4(); 
 Adafruit_SSD1306 display(4);
 
 // Touchpad and buzzer
@@ -71,7 +71,7 @@ float kt = 2;
 // PID lidPID(&lInput, &lOutput, &lSetpoint, lKp, lKi, lKd, DIRECT);
 
 // Temperature PID control
-double Setpoint = 75, Input, Output;
+double Setpoint = 60, Input, Output;
 double Kp = 15, Ki = 0, Kd = 0;
 PID tempPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
@@ -82,7 +82,7 @@ float temp, hum, pres;
 DS18B20 ds(8);
 
 // Threshold value (to be adjusted)
-float threshold = 1.2;  // ไว้มาแก้
+float threshold = 1.2; // ไว้มาแก้
 
 
 void setup() {
@@ -103,7 +103,7 @@ void setup() {
   digitalWrite(H_RELAY_PIN, LOW);
 
   mlx.begin();
-  Input = mlx.readObjectTempC();  // Read target temperature from MLX90614
+  Input = mlx.readObjectTempC(); // Read target temperature from MLX90614
 
   // Activate PID control
   tempPID.SetMode(AUTOMATIC);
@@ -111,48 +111,50 @@ void setup() {
   // Humidity and fan setup
   Wire.begin();
   pinMode(F_RELAY_PIN, OUTPUT);
-  digitalWrite(F_RELAY_PIN, LOW);  // Fan relay (active high)
+  digitalWrite(F_RELAY_PIN, LOW); // Fan relay (active high)
   bme.begin();
 
   // LED in box
   pinMode(LIGHT, OUTPUT);
-  digitalWrite(LIGHT, LOW);
+  digitalWrite(LIGHT,HIGH);
+  //digitalWrite(LIGHT, LOW);
 
   // OLED display setup
-  displaySetup();
+  //displaySetup();
 
   // 7-segment display setup
-  alpha4.begin(0x70);
+  //alpha4.begin(0x70); 
+
 }
 
 void loop() {
   //check
   // update system
   // main
-  checkTouchpad1();  // Check touchpad and toggle state
-  checkTouchpad2();  // Check touchpad and toggle state
-  checkTouchpad3();  // Check touchpad and toggle state
-  idleOLED();
-  Ventilator_control();            // Control ventilator based on humidity
-  updateServoStatenoProtection();  // Update servo position based on state
-  updateSystem();                  // Update system for PID and Manual
-  // statusUpdate();       // Check if food's ready
-  updatesevensegdisplay();  // update 7segment display
-  //printdata();
+  //checkTouchpad1();     // Check touchpad and toggle state
+  checkTouchpad2();       // Check touchpad and toggle state
+  //checkTouchpad3();     // Check touchpad and toggle state
+  //idleOLED();
+  Ventilator_control();  // Control ventilator based on humidity
+  updateServoStatenoProtection();    // Update servo position based on state
+  updateTempPID();       // Update system for PID and Manual
+  //statusUpdate();       // Check if food's ready
+  //updatesevensegdisplay(); // update 7segment display
+  printdata();
   // delay(300);            // Main loop delay
 }
 
-// void printdata() {
-//   // IRobjecttemp,IRambienttemp,Probetemp,BMEtemp,BMEhumidity,BMEpressure,ServoAngle,CurrentA
-//   Serial.print(mlx.readObjectTempC());Serial.print(",");
-//   Serial.print(mlx.readAmbientTempC());Serial.print(",");
-//   Serial.print(ds.getTempC());Serial.print(",");
-//   Serial.print(temp);Serial.print(",");
-//   Serial.print(hum);Serial.print(",");
-//   Serial.print(pres);Serial.print(",");
-//   Serial.println(myservo.read());//Serial.print(",");
-//   //Serial.println(readCurrent());
-// }
+void printdata() {
+  // IRobjecttemp,IRambienttemp,Probetemp,BMEtemp,BMEhumidity,BMEpressure,ServoAngle,CurrentA
+  Serial.print(mlx.readObjectTempC());Serial.print(",");
+  Serial.print(mlx.readAmbientTempC());Serial.print(",");
+  Serial.print(ds.getTempC());Serial.print(",");
+  Serial.print(temp);Serial.print(",");
+  Serial.print(hum);Serial.print(",");
+  Serial.print(pres);Serial.print(",");
+  Serial.println(myservo.read());//Serial.print(",");
+  //Serial.println(readCurrent());
+}
 
 // void check() {
 //   Serial.print("oled touchpad1 state : "); Serial.println(stat1);
@@ -193,7 +195,7 @@ void loop() {
 //   delay(500);
 //   Serial.println("Closing lid :");
 //   moveServo(serclose);
-//   delay(500);
+//   delay(500);  
 //   Serial.println("7 SEG CHECK");
 //   updatesevensegdisplay();
 //   // delay(2000);
@@ -209,7 +211,8 @@ void moveServo(int targetPos) {
       myservo.write(pos);
       delay(8);
     }
-  } else if (currentPos > targetPos) {
+  } 
+  else if (currentPos > targetPos) {
     for (int pos = currentPos; pos >= targetPos; pos--) {
       myservo.write(pos);
       delay(20);
@@ -224,11 +227,11 @@ void moveServo(int targetPos) {
 //   return current;
 // }
 
-void setColor(int red, int green, int blue) {
-  analogWrite(RED_PIN, 255 - red);  // Invert สีสำหรับ Common Anode
-  analogWrite(GREEN_PIN, 255 - green);
-  //analogWrite(BLUE_PIN, 255-blue);
-}
+// void setColor(int red, int green, int blue) {
+//   analogWrite(RED_PIN, 255-red);   // Invert สีสำหรับ Common Anode
+//   analogWrite(GREEN_PIN, 255-green);
+//   //analogWrite(BLUE_PIN, 255-blue);
+// }
 
 // Function to update servo state based on stat
 // void updateServoState() {
@@ -243,13 +246,13 @@ void setColor(int red, int green, int blue) {
 //     else if (myservo.read() != seropen) {
 //       moveServo(seropen);
 //     }
-//   }
+//   } 
 //   else { // Lid is closed
 //     if (cur < threshold && myservo.read() != serclose) {
 //       Serial.println("Opening lid due to obstacle...");
 //       moveServo(seropen);
 //       stat2 = 1;
-//     }
+//     } 
 //     else if (myservo.read() != serclose) {
 //       moveServo(serclose);
 //     }
@@ -262,7 +265,8 @@ void updateServoStatenoProtection() {
   if (stat2 == 0) {
     //Serial.println("Closing lid");
     moveServo(serclose);
-  } else if (stat2 == 1) {
+  } 
+  else if (stat2 == 1) {
     //Serial.println("Opening lid");
     moveServo(seropen);
   }
@@ -270,8 +274,8 @@ void updateServoStatenoProtection() {
 
 // Function to handle temperature PID (placeholder)
 void updateTempPID() {
-  Input = ds.getTempC();
-  if (Setpoint - Input >= 8) {
+  Input = mlx.readObjectTempC();
+  if (Setpoint-Input>=8) {
     pwm(255);
     return;
   }
@@ -283,7 +287,7 @@ void pwm(float sig) {
   sig = constrain(sig, 0, 255);  // Ensure PWM value is within range
 
   int onTime = map(sig, 0, 255, 0, 5000);  // Convert 0-255 to 0-10 ms
-  int offTime = 5000 - onTime;             // Complementary OFF time
+  int offTime = 5000 - onTime;  // Complementary OFF time
 
   digitalWrite(H_RELAY_PIN, HIGH);
   delay(onTime);  // Keep SSR ON for 'onTime'
@@ -292,99 +296,99 @@ void pwm(float sig) {
   delay(offTime);  // Keep SSR OFF for 'offTime'
 }
 
-void idleOLED() {
-  if (millis() - lastPressTime > 10000) {
-    display.clearDisplay();
-    display.setCursor(10, 3);
-    display.setTextSize(3);
-    display.print(ds.getTempC(), 1);
-    display.print(" C");
-    display.fillRect(88, 3, 5, 2, SSD1306_WHITE);
-    display.fillRect(85, 5, 3, 3, SSD1306_WHITE);
-    display.fillRect(93, 5, 3, 3, SSD1306_WHITE);
-    display.fillRect(88, 8, 5, 2, SSD1306_WHITE);  // degree symbol (°)
-    display.display();
-    isIdle = true;
-  }
-}
+// void idleOLED() {
+//   if (millis() - lastPressTime > 2000) {
+//     display.clearDisplay();
+//     display.setCursor(10, 3);
+//     display.setTextSize(3);
+//     display.print(mlx.readObjectTempC(), 1);
+//     display.print(" C");
+//     display.fillRect(88, 3, 5, 2, SSD1306_WHITE);
+//     display.fillRect(85, 5, 3, 3, SSD1306_WHITE);
+//     display.fillRect(93, 5, 3, 3, SSD1306_WHITE);
+//     display.fillRect(88, 8, 5, 2, SSD1306_WHITE); // degree symbol (°)
+//     display.display();
+//     isIdle = true;
+//   }
+// }
 
-void wakeUpOLED() {
-  if (isIdle) {
-    display.clearDisplay();  // Clear screen ONCE
-    drawMode();              // Redraw mode section
-    drawLightBulb();         // Redraw light bulb section
-    display.display();       // Ensure buffer update
-    isIdle = false;          // Reset idle status
-  }
-}
+// void wakeUpOLED() {
+//   if (isIdle) {
+//     display.clearDisplay();  // Clear screen ONCE
+//     drawMode();              // Redraw mode section
+//     drawLightBulb();         // Redraw light bulb section
+//     display.display();       // Ensure buffer update
+//     isIdle = false;          // Reset idle status
+//   }
+// }
 
-void drawMode() {
-  display.fillRect(0, 0, 80, 40, SSD1306_BLACK);
-  display.setCursor(5, 0);
-  display.setTextSize(2);
-  display.print("Mode:");
-  display.setCursor(5, 17);
-  display.print(stat1 == 0 ? "ON" : "AUTO");
-  display.display();
-}
+// void drawMode() {
+//   display.fillRect(0, 0, 80, 40, SSD1306_BLACK);
+//   display.setCursor(5, 0);
+//   display.setTextSize(2);
+//   display.print("Mode:");
+//   display.setCursor(5, 17);
+//   display.print(stat1 == 0 ? "ON" : "AUTO");
+//   display.display();
+// }
 
-void drawLightBulb() {
-  display.setTextSize(2);
-  display.fillRect(75, 0, 55, 80, SSD1306_BLACK);
+// void drawLightBulb() {
+//   display.setTextSize(2); 
+//   display.fillRect(75, 0, 55, 80, SSD1306_BLACK);
 
-  display.fillRect(99, 24, 12, 7, SSD1306_WHITE);
-  display.fillRect(101, 25, 8, 5, SSD1306_BLACK);
-  display.drawLine(101, 26, 109, 26, SSD1306_WHITE);
-  display.drawLine(101, 28, 109, 28, SSD1306_WHITE);  // Base
-  display.drawLine(98, 4, 111, 4, SSD1306_WHITE);     // Top
+//   display.fillRect(99, 24, 12, 7, SSD1306_WHITE);
+//   display.fillRect(101, 25, 8, 5, SSD1306_BLACK);
+//   display.drawLine(101, 26, 109, 26, SSD1306_WHITE);
+//   display.drawLine(101, 28, 109, 28, SSD1306_WHITE); // Base
+//   display.drawLine(98, 4, 111, 4, SSD1306_WHITE); // Top
 
-  display.drawLine(98, 24, 95, 19, SSD1306_WHITE);  // Left bottom1
-  display.drawLine(95, 19, 90, 12, SSD1306_WHITE);  // Left bottom2
-  display.drawLine(90, 12, 90, 9, SSD1306_WHITE);   // Left side
-  display.drawLine(90, 9, 92, 6, SSD1306_WHITE);    // Left top1
-  display.drawLine(92, 6, 97, 5, SSD1306_WHITE);    // Left top2
+//   display.drawLine(98, 24, 95, 19, SSD1306_WHITE); // Left bottom1
+//   display.drawLine(95, 19, 90, 12, SSD1306_WHITE); // Left bottom2
+//   display.drawLine(90, 12, 90, 9, SSD1306_WHITE); // Left side
+//   display.drawLine(90, 9, 92, 6, SSD1306_WHITE); // Left top1
+//   display.drawLine(92, 6, 97, 5, SSD1306_WHITE); // Left top2
 
-  display.drawLine(111, 24, 114, 19, SSD1306_WHITE);  // Right bottom1
-  display.drawLine(114, 19, 119, 12, SSD1306_WHITE);  // Right bottom2
-  display.drawLine(119, 12, 119, 9, SSD1306_WHITE);   // Right side
-  display.drawLine(119, 9, 117, 6, SSD1306_WHITE);    // Right top1
-  display.drawLine(117, 6, 112, 5, SSD1306_WHITE);    // Right top2
+//   display.drawLine(111, 24, 114, 19, SSD1306_WHITE); // Right bottom1
+//   display.drawLine(114, 19, 119, 12, SSD1306_WHITE); // Right bottom2
+//   display.drawLine(119, 12, 119, 9, SSD1306_WHITE); // Right side
+//   display.drawLine(119, 9, 117, 6, SSD1306_WHITE); // Right top1
+//   display.drawLine(117, 6, 112, 5, SSD1306_WHITE); // Right top2
 
-  if (stat3 == 1) {
-    display.fillRect(101, 26, 8, 4, SSD1306_WHITE);
-    display.fillRect(100, 6, 10, 2, SSD1306_WHITE);
-    display.drawLine(98, 7, 112, 7, SSD1306_WHITE);
-    display.fillCircle(104, 14, 7, SSD1306_WHITE);
-    display.fillCircle(105, 14, 7, SSD1306_WHITE);
-    display.fillRect(95, 8, 20, 1, SSD1306_WHITE);
-    display.fillRect(94, 9, 22, 3, SSD1306_WHITE);
-    display.fillRect(95, 12, 20, 2, SSD1306_WHITE);
-    display.drawLine(96, 14, 113, 14, SSD1306_WHITE);
-    display.drawLine(101, 21, 109, 21, SSD1306_WHITE);
-    display.drawLine(101, 22, 108, 22, SSD1306_WHITE);  // Fill
+//   if (stat3 == 1) {
+//   display.fillRect(101, 26, 8, 4, SSD1306_WHITE);
+//   display.fillRect(100, 6, 10, 2, SSD1306_WHITE);
+//   display.drawLine(98, 7, 112, 7, SSD1306_WHITE);
+//   display.fillCircle(104, 14, 7, SSD1306_WHITE);
+//   display.fillCircle(105, 14, 7, SSD1306_WHITE);
+//   display.fillRect(95, 8, 20, 1, SSD1306_WHITE);
+//   display.fillRect(94, 9, 22, 3, SSD1306_WHITE);
+//   display.fillRect(95, 12, 20, 2, SSD1306_WHITE);
+//   display.drawLine(96, 14, 113, 14, SSD1306_WHITE);
+//   display.drawLine(101, 21, 109, 21, SSD1306_WHITE);
+//   display.drawLine(101, 22, 108, 22, SSD1306_WHITE); // Fill
 
-    display.drawLine(92, 1, 95, 2, SSD1306_WHITE);
-    display.drawLine(117, 1, 114, 2, SSD1306_WHITE);
-    display.drawLine(82, 11, 86, 11, SSD1306_WHITE);
-    display.drawLine(123, 11, 127, 11, SSD1306_WHITE);
-    display.drawLine(88, 21, 91, 20, SSD1306_WHITE);
-    display.drawLine(121, 21, 118, 20, SSD1306_WHITE);  // Sparkles
-  }
-  display.display();
-}
+//   display.drawLine(92, 1, 95, 2, SSD1306_WHITE);
+//   display.drawLine(117, 1, 114, 2, SSD1306_WHITE);
+//   display.drawLine(82, 11, 86, 11, SSD1306_WHITE);
+//   display.drawLine(123, 11, 127, 11, SSD1306_WHITE);
+//   display.drawLine(88, 21, 91, 20, SSD1306_WHITE);
+//   display.drawLine(121, 21, 118, 20, SSD1306_WHITE); // Sparkles
+//   }
+//   display.display();
+// }
 
-void checkTouchpad1() {
-  valtp1 = digitalRead(touchpad1);
-  if (valtp1 == 1) {
-    wakeUpOLED();
-    tone(buzz, 3000, 100);
-    stat1 = !stat1;
-    drawMode();
-    display.display();
-    lastPressTime = millis();
-    delay(100);
-  }
-}
+// void checkTouchpad1() {
+//   valtp1 = digitalRead(touchpad1);
+//   if (valtp1 == 1) {
+//     //wakeUpOLED();
+//     tone(buzz, 3000, 100);
+//     stat1 = !stat1;
+//     // drawMode();
+//     // display.display();
+//     lastPressTime = millis();
+//     delay(100);
+//   }
+// }
 
 void checkTouchpad2() {
   valtp2 = digitalRead(touchpad2);
@@ -395,64 +399,65 @@ void checkTouchpad2() {
   }
 }
 
-void checkTouchpad3() {
-  valtp3 = digitalRead(touchpad3);
-  if (valtp3 == 1) {
-    wakeUpOLED();
-    tone(buzz, 3000, 100);
-    stat3 = !stat3;
-    statL = !statL;
-    drawLightBulb();
-    display.display();
-    lastPressTime = millis();
-    digitalWrite(LIGHT, statL == 1 ? HIGH : LOW);
-    delay(100);
-  }
-}
+// void checkTouchpad3() {
+//   valtp3 = digitalRead(touchpad3);
+//   if (valtp3 == 1) {
+//     wakeUpOLED();
+//     tone(buzz, 3000, 100);
+//     stat3 = !stat3;
+//     statL = !statL;
+//     drawLightBulb();
+//     display.display();
+//     lastPressTime = millis();
+//     digitalWrite(LIGHT, statL == 1 ? HIGH : LOW);
+//     delay(100);
+//   }
+// }
 
-void displaySetup() {
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  display.clearDisplay();
-  display.setRotation(2);
-  display.setTextSize(2);
-  display.setTextColor(SSD1306_WHITE);
-  drawMode();
-  drawLightBulb();
-  // Add OLED display code here (e.g., using SSD1306 library)
-  // Example: display temperature, servo position, or status
-}
+// void displaySetup() {
+//   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+//   display.clearDisplay();
+//   display.setRotation(2);
+//   display.setTextSize(2);
+//   display.setTextColor(SSD1306_WHITE);
+//   drawMode();
+//   drawLightBulb();
+//   // Add OLED display code here (e.g., using SSD1306 library)
+//   // Example: display temperature, servo position, or status
+// }
 
-void updateSystem() {
-  if (stat1 == 1) {
-    tempPID.SetMode(AUTOMATIC);  // PID on
-    updateTempPID();
-  } else {
-    tempPID.SetMode(MANUAL);  // PID off
-    digitalWrite(H_RELAY_PIN, HIGH);
-  }
-}
+// void updateSystem() {
+//   if (stat1 == 1) {
+//     tempPID.SetMode(AUTOMATIC); // PID on
+//     updateTempPID();
+//   } else {
+//     tempPID.SetMode(MANUAL); // PID off
+//     digitalWrite(H_RELAY_PIN, HIGH);
+//   }
+// }
 
-void statusUpdate() {
-  if (Input == Setpoint) {
-    setColor(255, 0, 0);
-  } else {
-    setColor(0, 0, 0);
-  }
-}
+// void statusUpdate() {
+//   if (Input == Setpoint) {
+//     setColor(255, 0, 0);
+//   } else {
+//     setColor(0, 0, 0);
+//   }
+// }
 
-void updatesevensegdisplay() {
-  float tempP = mlx.readObjectTempC();
-  char buffer[5];
-  dtostrf(tempP, 4, 1, buffer);  // Convert float to string with 1 decimal place
-  for (int i = 0; i < 4; i++) {
-    alpha4.writeDigitAscii(i, buffer[i]);
-  }
-  alpha4.writeDisplay();  // Update display
-}
+// void updatesevensegdisplay() {
+//   float tempP = mlx.readObjectTempC();
+//   char buffer[5];
+//   dtostrf(tempP, 4, 1, buffer);  // Convert float to string with 1 decimal place
+//   for (int i = 0; i < 4; i++) {
+//     alpha4.writeDigitAscii(i, buffer[i]);
+//   }
+//   alpha4.writeDisplay(); // Update display
+// }
+
 
 void Ventilator_control() {
   BMEread(temp, hum, pres);
-  if (ds.getTempC() > 55) {
+  if (mlx.readAmbientTempC() > 55) {
     digitalWrite(F_RELAY_PIN, HIGH);  // Turn ON ventilator
     // Serial.println("Ventilator ON");
   } else {
