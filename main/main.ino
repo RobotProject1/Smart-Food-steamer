@@ -25,7 +25,20 @@ BME280I2C bme;  // Default settings: forced mode, standby time = 1000 ms
 
 // RGB LED pins
 #define RED_PIN 9
-#define GREEN_PIN 10
+#define GREEN_PIN 10#define LED 2
+
+void setup() {
+  // Set pin mode
+  pinMode(LED,OUTPUT);
+}
+
+void loop() {
+  delay(50);
+// you can set the delay time by adjusting the parameter of delay();
+  digitalWrite(LED,HIGH);
+  delay(50);
+  digitalWrite(LED,LOW);
+}
 // #define BLUE_PIN
 
 // Light control
